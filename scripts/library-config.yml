@@ -19,7 +19,7 @@ columns:
   id: ID
   title: Title
   year: Year
-  access: Access_Rights
+  access: Access
   filename: PDF_file_name
   published_url: View_at_Publisher
   status: Portal_Status
@@ -30,8 +30,8 @@ columns:
 values:
   access:
     open: Open
-    physical_library: Contact PacELF at JCU
-    publisher: Open via Publisher
+    physical_library: hardcopy
+    publisher: download from publisher
   status:
     active: Active
     deleted: Delete
