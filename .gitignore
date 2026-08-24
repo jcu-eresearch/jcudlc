@@ -1,3 +1,4 @@
+**/~*
 .DS_Store
 **/.DS_Store
 
@@ -12,3 +13,6 @@ inputs/
 
 outputs/
 !outputs/.gitkeep
+
+logs/
+!logs/.gitkeep

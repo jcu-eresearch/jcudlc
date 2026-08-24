@@ -2,17 +2,17 @@
 
 excel:
   file: inputs/library-index.xlsx
-  sheet: MASTER
+  sheet: MAIN
   rows:
-    filter: 1
-    search: 2
-    full_display: 3
-    multi_option: 4
-    column_headers: 5
+    filter: 2
+    search: 3
+    full_display: 4
+    multi_option: 5
+    column_headers: 6
 
 documents:
-  source_path: /Volumes/PHTM_PacELF/b PacELF Documents
-  destination_path: ../public/documents
+  source_path: example-input-data/documents
+  destination_path: outputs/documents
   file_pattern: "**/*"
 
 columns:
@@ -21,17 +21,20 @@ columns:
   year: Year
   access: Access
   filename: PDF_file_name
-  published_url: View_at_Publisher
+  published_url: Published_URL
   status: Portal_Status
   generated:
     display_url: URL
     display_icon: Icon
 
+# Translates the values in the spreadsheet to the values used in the scripts for validation and to provide
+# the correct behaviour for the website. For example, the spreadsheet may have "Open" (or some other value to be displayed
+# on the website) in the Access column, but the scripts need to use "open" to validate and generate the correct URL and icon.
 values:
   access:
     open: Open
-    physical_library: hardcopy
-    publisher: download from publisher
+    physical_library: Contact us
+    publisher: Access via publisher
   status:
     active: Active
     deleted: Delete
@@ -48,7 +51,7 @@ website:
     library: schedule
 
 general:
-  missing_value_token: NO VALUE
+  missing_value_token: n/a
 
 query:
   sortings:

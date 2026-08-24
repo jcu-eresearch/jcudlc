@@ -38,7 +38,7 @@ if [ ! -f $LIBRARY_INDEX ]; then
   exit $FAILURE
 fi
 
-# clear pervious outputs and log files
+# clear previous outputs and log files
 echo "Removing any previous $LOG_DIR/*.log files"
 cd $LOG_DIR || {
   echo "Cannot change to log directory."
