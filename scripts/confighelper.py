@@ -14,6 +14,10 @@ except ImportError as exc:
 
 CONFIG_FILE = Path(__file__).with_name("library-config.yml")
 SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_INPUT_DIR = "inputs"
+DEFAULT_OUTPUT_DIR = "outputs"
+DEFAULT_LOG_DIR = "logs"
+DEFAULT_EXCEL_FILE = "library-index.xlsx"
 
 
 @dataclass(frozen=True)
@@ -81,6 +85,9 @@ class General:
 
 @dataclass(frozen=True)
 class LocalPaths:
+    input_dir: Path
+    output_dir: Path
+    log_dir: Path
     doc_display_config: Path
     search_config: Path
     filter_config: Path
@@ -114,6 +121,46 @@ def _resolve_path(path_value):
     return (SCRIPT_DIR / path).resolve()
 
 
+def _resolve_runtime_path(path_value):
+    path = Path(path_value).expanduser()
+    if path.is_absolute():
+        return path
+    return (Path.cwd() / path).resolve()
+
+
+def _resolve_excel_file(input_dir, excel_file):
+    path = Path(excel_file).expanduser()
+    if path.is_absolute() or path.parent != Path("."):
+        return _resolve_runtime_path(path)
+    return input_dir / path
+
+
+def add_runtime_path_arguments(parser):
+    parser.add_argument(
+        "--input-dir",
+        default=DEFAULT_INPUT_DIR,
+        help=f"input directory containing the spreadsheet and documents (default: ./{DEFAULT_INPUT_DIR})",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"output directory for generated CSV and JSON files (default: ./{DEFAULT_OUTPUT_DIR})",
+    )
+    parser.add_argument(
+        "--log-dir",
+        default=DEFAULT_LOG_DIR,
+        help=f"log directory used by wrapper scripts (default: ./{DEFAULT_LOG_DIR})",
+    )
+    parser.add_argument(
+        "--excel-file",
+        default=DEFAULT_EXCEL_FILE,
+        help=(
+            "Excel file name inside input-dir, or a relative/absolute path "
+            f"(default: {DEFAULT_EXCEL_FILE})"
+        ),
+    )
+
+
 def load_config():
     if not CONFIG_FILE.exists():
         raise FileNotFoundError(f"Configuration file not found: {CONFIG_FILE}")
@@ -129,21 +176,30 @@ def load_config():
 
 def get_sheet_config(config):
     rows = _require(config, "excel.rows")
+
+    def spreadsheet_row_to_index(row_path):
+        row_number = int(_require(rows, row_path))
+        if row_number < 1:
+            raise ValueError(f"excel.rows.{row_path} must be a spreadsheet row number >= 1")
+        return row_number - 1
+
     return SheetValues(
         sheetname=_require(config, "excel.sheet"),
-        filterRowIdx=int(_require(rows, "filter")),
-        searchRowIdx=int(_require(rows, "search")),
-        fullDisplayRowIdx=int(_require(rows, "full_display")),
-        multiOptionRowIdx=int(_require(rows, "multi_option")),
-        colHeaderRowIdx=int(_require(rows, "column_headers")),
+        filterRowIdx=spreadsheet_row_to_index("filter"),
+        searchRowIdx=spreadsheet_row_to_index("search"),
+        fullDisplayRowIdx=spreadsheet_row_to_index("full_display"),
+        multiOptionRowIdx=spreadsheet_row_to_index("multi_option"),
+        colHeaderRowIdx=spreadsheet_row_to_index("column_headers"),
     )
 
 
-def get_docs_config(config):
+def get_docs_config(config, input_dir=None, output_dir=None):
+    input_dir = _resolve_runtime_path(input_dir or DEFAULT_INPUT_DIR)
+    output_dir = _resolve_runtime_path(output_dir or DEFAULT_OUTPUT_DIR)
     return Docs(
         file_pattern=_require(config, "documents.file_pattern"),
-        src_path=_resolve_path(_require(config, "documents.source_path")),
-        dest_path=_resolve_path(_require(config, "documents.destination_path")),
+        src_path=input_dir / "documents",
+        dest_path=output_dir / "documents",
     )
 
 
@@ -227,17 +283,44 @@ def get_query_config(config):
     return query_sortings
 
 
-def get_internal_files(config):
+def get_internal_files(
+    config,
+    input_dir=None,
+    output_dir=None,
+    log_dir=None,
+    excel_file=None,
+):
+    input_dir = _resolve_runtime_path(input_dir or DEFAULT_INPUT_DIR)
+    output_dir = _resolve_runtime_path(output_dir or DEFAULT_OUTPUT_DIR)
+    log_dir = _resolve_runtime_path(log_dir or DEFAULT_LOG_DIR)
+    excel_file = excel_file or DEFAULT_EXCEL_FILE
     return LocalPaths(
-        doc_display_config=_resolve_path("outputs/doc-display-config.csv"),
-        search_config=_resolve_path("outputs/search-config.csv"),
-        filter_config=_resolve_path("outputs/filter-config.csv"),
-        query_config=_resolve_path("outputs/query-config.json"),
-        multi_option_config=_resolve_path("outputs/multi-option-config.csv"),
-        excel_file=_resolve_path(_require(config, "excel.file")),
-        libindex_csv=_resolve_path("outputs/library-index.csv"),
-        libindex_json=_resolve_path("outputs/library-index.json"),
+        input_dir=input_dir,
+        output_dir=output_dir,
+        log_dir=log_dir,
+        doc_display_config=output_dir / "doc-display-config.csv",
+        search_config=output_dir / "search-config.csv",
+        filter_config=output_dir / "filter-config.csv",
+        query_config=output_dir / "query-config.json",
+        multi_option_config=output_dir / "multi-option-config.csv",
+        excel_file=_resolve_excel_file(input_dir, excel_file),
+        libindex_csv=output_dir / "library-index.csv",
+        libindex_json=output_dir / "library-index.json",
     )
+
+
+def configure_runtime_paths(args):
+    global docs, files
+
+    docs = get_docs_config(config, args.input_dir, args.output_dir)
+    files = get_internal_files(
+        config,
+        args.input_dir,
+        args.output_dir,
+        args.log_dir,
+        args.excel_file,
+    )
+    return files, docs
 
 
 config = load_config()

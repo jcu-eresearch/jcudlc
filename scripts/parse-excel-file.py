@@ -4,12 +4,14 @@
   Save the config information (1st 3 rows) as separate csv files.
 
 """
+import argparse
 import pandas as pd
 import sys
 from dataclasses import fields
 
 # Use sheet configuration from confighelper
-from confighelper import files, label, sheet_config
+import confighelper as cfg
+from confighelper import label, sheet_config
 
 # inputs
 SHEET_NAME = sheet_config.sheetname
@@ -127,64 +129,80 @@ def drop_rows_without_id(df, label_config):
     return df
 
 
-pd.set_option('future.no_silent_downcasting', True)
+def main():
+    parser = argparse.ArgumentParser()
+    cfg.add_runtime_path_arguments(parser)
+    args = parser.parse_args()
+    files, _docs = cfg.configure_runtime_paths(args)
 
-# (a) Read the entire Excel file (no header yet, to process config rows and data rows together)
-df_full = pd.read_excel(files.excel_file, sheet_name=SHEET_NAME, header=None, dtype="str")
+    files.output_dir.mkdir(parents=True, exist_ok=True)
 
-# Normalise (strip whitespace) from all content
-df_full = df_full.map(lambda x: x.strip() if isinstance(x, str) else x)
+    pd.set_option('future.no_silent_downcasting', True)
 
-# (b) Drop unwanted columns based on filter markers
-df_full = drop_unfiltered_columns(df_full, sheet_config.filterRowIdx)
+    # (a) Read the entire Excel file (no header yet, to process config rows and data rows together)
+    try:
+        df_full = pd.read_excel(files.excel_file, sheet_name=SHEET_NAME, header=None, dtype="str")
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        exit(1)
 
-# Get column labels from the column header row
-col_labels = df_full.iloc[sheet_config.colHeaderRowIdx].tolist()
-df_full.columns = col_labels
+    # Normalise (strip whitespace) from all content
+    df_full = df_full.map(lambda x: x.strip() if isinstance(x, str) else x)
 
-# (c) Extract and write config files from the first few config rows
-filter_data = (
-    df_full.iloc[[sheet_config.filterRowIdx]]
-    .replace({"Filter_yes": True, "Filter_no": False})
-    .to_csv(files.filter_config, index=False)
-)
-search_data = (
-    df_full.iloc[[sheet_config.searchRowIdx]]
-    .replace({"Search_yes": True, "Search_no": False})
-    .to_csv(files.search_config, index=False)
-)
-full_display_data = (
-    df_full.iloc[[sheet_config.fullDisplayRowIdx]]
-    .replace({"FullDisplay_yes": True, "FullDisplay_no": False})
-    .to_csv(files.doc_display_config, index=False)
-)
-multi_option_data = (
-    df_full.iloc[[sheet_config.multiOptionRowIdx]]
-    .replace({"MultiOption_yes": True, "MultiOption_no": False})
-    .to_csv(files.multi_option_config, index=False)
-)
+    # (b) Drop unwanted columns based on filter markers
+    df_full = drop_unfiltered_columns(df_full, sheet_config.filterRowIdx)
 
-# (d) Extract data rows from colHeaderRowIdx onwards, clean, and write to CSV
-# Extract data rows starting from the row after the column header row
-df_data = df_full.iloc[sheet_config.colHeaderRowIdx + 1:].copy()
-df_data.columns = col_labels
+    # Get column labels from the column header row
+    col_labels = df_full.iloc[sheet_config.colHeaderRowIdx].tolist()
+    df_full.columns = col_labels
 
-# Clean the data: drop rows without valid ID
-df_data = drop_rows_without_id(df_data, label)
-
-# Validate that all mandatory column labels exist
-validate_mandatory_columns(df_data, label)
-
-# Save the cleaned data records to CSV
-df_data.to_csv(files.libindex_csv, index=False, encoding="utf-8")
-
-print(
-    "{}\n converted to\n {},\n {},\n {}\n, {}\n and {}".format(
-        files.excel_file,
-        files.libindex_csv,
-        files.filter_config,
-        files.search_config,
-        files.doc_display_config,
-        files.multi_option_config,
+    # (c) Extract and write config files from the first few config rows
+    filter_data = (
+        df_full.iloc[[sheet_config.filterRowIdx]]
+        .replace({"Filter_yes": True, "Filter_no": False})
+        .to_csv(files.filter_config, index=False)
     )
-)
+    search_data = (
+        df_full.iloc[[sheet_config.searchRowIdx]]
+        .replace({"Search_yes": True, "Search_no": False})
+        .to_csv(files.search_config, index=False)
+    )
+    full_display_data = (
+        df_full.iloc[[sheet_config.fullDisplayRowIdx]]
+        .replace({"FullDisplay_yes": True, "FullDisplay_no": False})
+        .to_csv(files.doc_display_config, index=False)
+    )
+    multi_option_data = (
+        df_full.iloc[[sheet_config.multiOptionRowIdx]]
+        .replace({"MultiOption_yes": True, "MultiOption_no": False})
+        .to_csv(files.multi_option_config, index=False)
+    )
+
+    # (d) Extract data rows from colHeaderRowIdx onwards, clean, and write to CSV
+    # Extract data rows starting from the row after the column header row
+    df_data = df_full.iloc[sheet_config.colHeaderRowIdx + 1:].copy()
+    df_data.columns = col_labels
+
+    # Clean the data: drop rows without valid ID
+    df_data = drop_rows_without_id(df_data, label)
+
+    # Validate that all mandatory column labels exist
+    validate_mandatory_columns(df_data, label)
+
+    # Save the cleaned data records to CSV
+    df_data.to_csv(files.libindex_csv, index=False, encoding="utf-8")
+
+    print(
+        "{}\n converted to\n {},\n {},\n {}\n, {}\n and {}".format(
+            files.excel_file,
+            files.libindex_csv,
+            files.filter_config,
+            files.search_config,
+            files.doc_display_config,
+            files.multi_option_config,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

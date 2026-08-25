@@ -1,8 +1,8 @@
 # Configuration for generating website data from the library spreadsheet.
 
 excel:
-  file: inputs/library-index.xlsx
   sheet: MAIN
+  # These are spreadsheet row numbers, starting at 1, as shown in Excel.
   rows:
     filter: 2
     search: 3
@@ -11,8 +11,6 @@ excel:
     column_headers: 6
 
 documents:
-  source_path: example-input-data/documents
-  destination_path: outputs/documents
   file_pattern: "**/*"
 
 columns:

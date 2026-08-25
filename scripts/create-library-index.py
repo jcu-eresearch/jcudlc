@@ -17,6 +17,7 @@ import logging
 import structlog
 import argparse
 from dataclasses import asdict
+import confighelper as cfg
 from confighelper import (
     docs,
     label,
@@ -314,6 +315,7 @@ if __name__ == "__main__":
 
     # create parser
     parser = argparse.ArgumentParser()
+    cfg.add_runtime_path_arguments(parser)
 
     # add arguments to the parser
     parser.add_argument(
@@ -324,6 +326,10 @@ if __name__ == "__main__":
 
     # parse the command line arguments
     args = parser.parse_args()
+    files, docs = cfg.configure_runtime_paths(args)
+    files.output_dir.mkdir(parents=True, exist_ok=True)
+    docs.dest_path.mkdir(parents=True, exist_ok=True)
+
     is_dry_run = args.dry_run
     if is_dry_run:
         log.info("This is a dry-run, no changes will be made")
