@@ -8,11 +8,11 @@ __pycache__/
 
 .vscode/
 
-inputs/
-!inputs/.gitkeep
+data-prep/inputs/
+!data-prep/inputs/.gitkeep
 
-outputs/
-!outputs/.gitkeep
+data-prep/outputs/
+!data-prep/outputs/.gitkeep
 
-logs/
-!logs/.gitkeep
+data-prep/logs/
+!data-prep/logs/.gitkeep
