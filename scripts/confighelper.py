@@ -96,6 +96,7 @@ class LocalPaths:
     excel_file: Path
     libindex_csv: Path
     libindex_json: Path
+    library_config_json: Path
 
 
 def _require(mapping, path):
@@ -306,6 +307,7 @@ def get_internal_files(
         excel_file=_resolve_excel_file(input_dir, excel_file),
         libindex_csv=output_dir / "library-index.csv",
         libindex_json=output_dir / "library-index.json",
+        library_config_json=output_dir / "library-config.json",
     )
 
 

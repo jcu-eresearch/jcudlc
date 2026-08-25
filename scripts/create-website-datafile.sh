@@ -150,6 +150,15 @@ python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DI
   exit $FAILURE
 }
 
+PYTHON_SCRIPT_NAME=create-library-config
+echo "Running $PYTHON_SCRIPT_NAME.py ..."
+python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
+  echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
+  grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
+  echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."
+  exit $FAILURE
+}
+
 echo "SUCCESS | No errors but you should still check the log files for warnings."
 
 # # copy json files into website src area
@@ -164,6 +173,8 @@ echo "--- Warnings in $LOG_DIR/get-library-docs.log ---"
 grep -i "warning\|warn" "$LOG_DIR/get-library-docs.log" || echo "(no warnings found)"
 echo "--- Warnings in $LOG_DIR/create-library-index.log ---"
 grep -i "warning\|warn" "$LOG_DIR/create-library-index.log" || echo "(no warnings found)"
+echo "--- Warnings in $LOG_DIR/create-library-config.log ---"
+grep -i "warning\|warn" "$LOG_DIR/create-library-config.log" || echo "(no warnings found)"
 
 echo "If all good then you are ready to build the website."
 exit $SUCCESS
