@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# Before running this script, copy the spreadsheet into the inputs folder,
-# and rename it to library-index.xlsx
+# Before running this script, copy the spreadsheet into the spreadsheet input
+# folder, rename it to library-index.xlsx, and place source documents in the
+# documents input folder.
 #
 # After running this script, check the *.log files that it has created in
 # the logs folder. Search for "warn" as well as "error".
@@ -23,14 +24,16 @@ SUCCESS=0
 SCRIPTS_DIR=$(cd "$(dirname "$0")" && pwd)
 LOG_DIR=logs
 INPUT_DIR=inputs
+DOCUMENTS_DIR=inputs/documents
 OUTPUT_DIR=outputs
 EXCEL_FILE=library-index.xlsx
 WEBSITE_SRC_PATH=../src/components
 #
 VENV=$SCRIPTS_DIR/.venv
+PYTHON_BIN=$VENV/bin/python
 
 usage() {
-  echo "Usage: $0 [--input-dir DIR] [--output-dir DIR] [--log-dir DIR] [--excel-file FILE]"
+  echo "Usage: $0 [--input-dir DIR] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR] [--excel-file FILE]"
 }
 
 require_value() {
@@ -46,6 +49,11 @@ while [ $# -gt 0 ]; do
     --input-dir)
       require_value "$1" "$2"
       INPUT_DIR="$2"
+      shift 2
+      ;;
+    --documents-dir)
+      require_value "$1" "$2"
+      DOCUMENTS_DIR="$2"
       shift 2
       ;;
     --output-dir)
@@ -86,6 +94,7 @@ esac
 
 PYTHON_PATH_ARGS=(
   --input-dir "$INPUT_DIR"
+  --documents-dir "$DOCUMENTS_DIR"
   --output-dir "$OUTPUT_DIR"
   --log-dir "$LOG_DIR"
   --excel-file "$EXCEL_FILE"
@@ -94,8 +103,15 @@ PYTHON_PATH_ARGS=(
 # Print start time and ensure we print finish time on exit (local timezone)
 START_TIME=$(date +"%Y-%m-%d %H:%M:%S %Z")
 echo "Script started at: ${START_TIME}"
-# Always print end time when the script exits
-trap 'echo "Script finished at: $(date +"%Y-%m-%d %H:%M:%S %Z") with exit code $?"' EXIT
+
+print_finish_time() {
+  local pipeline_exit_code=$?
+  trap - EXIT
+  echo "Script finished at: $(date +"%Y-%m-%d %H:%M:%S %Z") with exit code $pipeline_exit_code"
+  exit "$pipeline_exit_code"
+}
+
+trap print_finish_time EXIT
 
 if [ ! -f "$LIBRARY_INDEX" ]; then
   echo "$LIBRARY_INDEX is missing, no processing can be done."
@@ -118,23 +134,24 @@ rm -f "$OUTPUT_DIR"/*.json
 #
 # Input check and cleanup done. Time to start running the python scripts
 #
-# Activate the virtual environment
-echo "Activate virtual environment $VENV"
-source "$VENV/bin/activate" || {
-  echo "Failed to activate virtual environment."
+# Use the virtual environment's interpreter directly. This avoids relying on
+# absolute paths embedded in an activation script when the repository is moved.
+echo "Using Python virtual environment $VENV"
+if [ ! -x "$PYTHON_BIN" ]; then
+  echo "Python virtual environment not found at $VENV."
   exit $FAILURE
-}
+fi
 
 PYTHON_SCRIPT_NAME=parse-excel-file
 echo "Running $PYTHON_SCRIPT_NAME.py ..."
-python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"  || {
+"$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"  || {
   echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
   exit $FAILURE
 }
 
 PYTHON_SCRIPT_NAME=get-library-docs
 echo "Running $PYTHON_SCRIPT_NAME.py (this may take quite a while)..."
-python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
+"$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
   echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
   grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
   echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."
@@ -143,7 +160,7 @@ python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DI
 
 PYTHON_SCRIPT_NAME=create-library-index
 echo "Running $PYTHON_SCRIPT_NAME.py ..."
-python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
+"$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
   echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
   grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
   echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."
@@ -152,7 +169,7 @@ python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DI
 
 PYTHON_SCRIPT_NAME=create-library-config
 echo "Running $PYTHON_SCRIPT_NAME.py ..."
-python "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
+"$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
   echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
   grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
   echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."

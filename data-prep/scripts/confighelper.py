@@ -15,6 +15,7 @@ except ImportError as exc:
 CONFIG_FILE = Path(__file__).with_name("library-config.yml")
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_INPUT_DIR = "inputs"
+DEFAULT_DOCUMENTS_DIR = "inputs/documents"
 DEFAULT_OUTPUT_DIR = "outputs"
 DEFAULT_LOG_DIR = "logs"
 DEFAULT_EXCEL_FILE = "library-index.xlsx"
@@ -140,7 +141,12 @@ def add_runtime_path_arguments(parser):
     parser.add_argument(
         "--input-dir",
         default=DEFAULT_INPUT_DIR,
-        help=f"input directory containing the spreadsheet and documents (default: ./{DEFAULT_INPUT_DIR})",
+        help=f"input directory containing the spreadsheet (default: ./{DEFAULT_INPUT_DIR})",
+    )
+    parser.add_argument(
+        "--documents-dir",
+        default=DEFAULT_DOCUMENTS_DIR,
+        help=f"input directory containing source documents (default: ./{DEFAULT_DOCUMENTS_DIR})",
     )
     parser.add_argument(
         "--output-dir",
@@ -194,12 +200,12 @@ def get_sheet_config(config):
     )
 
 
-def get_docs_config(config, input_dir=None, output_dir=None):
-    input_dir = _resolve_runtime_path(input_dir or DEFAULT_INPUT_DIR)
+def get_docs_config(config, documents_dir=None, output_dir=None):
+    documents_dir = _resolve_runtime_path(documents_dir or DEFAULT_DOCUMENTS_DIR)
     output_dir = _resolve_runtime_path(output_dir or DEFAULT_OUTPUT_DIR)
     return Docs(
         file_pattern=_require(config, "documents.file_pattern"),
-        src_path=input_dir / "documents",
+        src_path=documents_dir,
         dest_path=output_dir / "documents",
     )
 
@@ -314,7 +320,7 @@ def get_internal_files(
 def configure_runtime_paths(args):
     global docs, files
 
-    docs = get_docs_config(config, args.input_dir, args.output_dir)
+    docs = get_docs_config(config, args.documents_dir, args.output_dir)
     files = get_internal_files(
         config,
         args.input_dir,

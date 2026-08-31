@@ -43,7 +43,8 @@ python3 -m venv scripts/.venv
 scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
 ```
 
-The wrapper expects the virtual environment at `scripts/.venv`.
+The wrapper expects the virtual environment at `scripts/.venv` and invokes its
+Python interpreter directly.
 
 ## Directory layout
 
@@ -61,9 +62,18 @@ data-prep/
 └── scripts/
 ```
 
+The spreadsheet and document source directories are configured independently.
+Their defaults are declared near the top of `scripts/create-website-datafile.sh`:
+
+```bash
+INPUT_DIR=inputs
+DOCUMENTS_DIR=inputs/documents
+```
+
 The script creates `logs/`, `outputs/`, and `outputs/documents/` if necessary.
-Create `inputs/documents/` yourself and place the source documents there. The
-document-copying stage currently stops with an error if it finds no source files.
+Create the source documents directory yourself and place the documents there.
+The document-copying stage currently stops with an error if it finds no source
+files.
 
 ## Prepare the workbook
 
@@ -127,9 +137,10 @@ The default accepted values are case-sensitive during final processing:
 | `Access` | `Contact us` | Use the configured contact/library behaviour. |
 
 An `Open` record must name an existing source file in `PDF_file_name`. The
-filename must match a file below `inputs/documents/`. Files may be organised in
-subdirectories. During copying, spaces and `/` characters in output filenames
-are replaced with `_`, and the CSV is updated to use the normalised name.
+filename must match a file below the document source directory
+(`inputs/documents/` by default). Files may be organised in subdirectories.
+During copying, spaces and `/` characters in output filenames are replaced with
+`_`, and the CSV is updated to use the normalised name.
 
 An `Access via publisher` record should contain a valid `Published_URL`.
 
@@ -176,16 +187,28 @@ The wrapper accepts custom input, output, log, and workbook locations:
 
 ```bash
 ./scripts/create-website-datafile.sh \
-  --input-dir /path/to/input \
+  --input-dir /path/to/spreadsheets \
+  --documents-dir /path/to/source-documents \
   --output-dir /path/to/output \
   --log-dir /path/to/logs \
   --excel-file catalogue.xlsx
 ```
 
-If `--excel-file` is only a filename, it is resolved inside `--input-dir`. A
-relative path containing `/`, or an absolute path, is used as supplied. Source
-documents are always read from a `documents/` directory below the selected input
-directory, and copied documents are written below the selected output directory.
+`--input-dir` controls only the spreadsheet input directory.
+`--documents-dir` directly identifies the source document directory; it is not
+resolved below `--input-dir`. If `--excel-file` is only a filename, it is
+resolved inside `--input-dir`. A relative spreadsheet path containing `/`, or an
+absolute path, is used as supplied. Copied documents are written to a
+`documents/` directory below the selected output directory.
+
+For example, run the repository's sample workbook and documents from
+`data-prep` with:
+
+```bash
+./scripts/create-website-datafile.sh \
+  --input-dir ../examples \
+  --documents-dir ../examples/documents
+```
 
 Run `./scripts/create-website-datafile.sh --help` to see the available options.
 
@@ -193,7 +216,7 @@ Run `./scripts/create-website-datafile.sh --help` to see the available options.
 
 | Script | Role |
 | --- | --- |
-| `create-website-datafile.sh` | Validates paths, clears prior CSV/JSON/log outputs, activates the virtual environment, and runs the pipeline. |
+| `create-website-datafile.sh` | Validates paths, clears prior CSV/JSON/log outputs, uses the project virtual environment, and runs the pipeline. |
 | `parse-excel-file.py` | Reads Excel, applies control rows, drops records without an ID, validates required columns, and writes the intermediate CSV/configuration CSV files. |
 | `get-library-docs.py` | Finds source documents recursively, copies active open-access files, normalises filenames, and updates the intermediate CSV. |
 | `create-library-index.py` | Filters records, validates access types and open files, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `library-index.json` and `query-config.json`. |
@@ -221,7 +244,8 @@ dropped before required-column validation.
 
 Check `logs/get-library-docs.log` and `logs/create-library-index.log`. Confirm
 that the record is `Active`, its access value is `Open`, and its
-`PDF_file_name` exactly matches a source filename below `inputs/documents/`.
+`PDF_file_name` exactly matches a source filename below the selected document
+source directory (`inputs/documents/` by default).
 
 ### A record is unexpectedly omitted
 
