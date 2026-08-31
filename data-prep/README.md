@@ -32,9 +32,16 @@ Intermediate CSV files are also written to `outputs/` for inspection.
 ## Requirements
 
 - Bash (the wrapper script is a Bash script).
-- Python with virtual environment support.
+- Python 3.11 or newer, with virtual environment support. The pinned NumPy
+  release in `scripts/requirements.txt` requires Python 3.11+.
 - An `.xlsx` workbook with the structure described below.
 - Source documents for open-access records.
+
+The Python requirements file installs the processing libraries, including
+`pandas`, `openpyxl`, `PyYAML`, and `structlog`, plus their pinned
+dependencies. The wrapper uses POSIX virtual-environment paths, so run it on
+macOS or Linux, or in a Linux environment such as WSL rather than native
+Windows Command Prompt or PowerShell.
 
 Run the setup commands from `data-prep`:
 
@@ -45,6 +52,17 @@ scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
 
 The wrapper expects the virtual environment at `scripts/.venv` and invokes its
 Python interpreter directly.
+
+For a first run using the included sample data:
+
+```bash
+cd data-prep
+python3 -m venv scripts/.venv
+scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
+bash scripts/create-website-datafile.sh \
+  --input-dir ../examples \
+  --documents-dir ../examples/documents
+```
 
 ## Directory layout
 
@@ -78,8 +96,8 @@ files.
 ## Prepare the workbook
 
 The default workbook is `inputs/library-index.xlsx`. Its layout is controlled by
-`scripts/library-config.yml`; by default the worksheet must be named `MAIN` and
-use these rows:
+`scripts/library-config.yml`; by default the worksheet must be named **`MAIN`**,
+matching the example workbook, and use these rows:
 
 | Excel row | Purpose | Accepted markers |
 | --- | --- | --- |
@@ -142,23 +160,34 @@ filename must match a file below the document source directory
 During copying, spaces and `/` characters in output filenames are replaced with
 `_`, and the CSV is updated to use the normalised name.
 
+Source document basenames must be unique across all subdirectories. They must
+also remain unique after filename normalisation (for example, `report one.pdf`
+and `report_one.pdf` would collide in the flat output directory).
+
 An `Access via publisher` record should contain a valid `Published_URL`.
 
 These values, the generated URL prefixes, icons, missing-value token, and query
 sorting presets can all be changed in `scripts/library-config.yml`.
+
+Some website-interface defaults are currently constants near the top of
+`scripts/create-library-config.py`, rather than YAML settings. Change that file
+if the generated configuration needs a different data URL, hidden-value list,
+quiet-field label, maximum result count, icon tooltip, or support text.
 
 ## Run the pipeline
 
 From `data-prep`, run:
 
 ```bash
-./scripts/create-website-datafile.sh
+bash scripts/create-website-datafile.sh
 ```
 
-If the script is not executable, use:
+The repository currently stores the wrapper without its executable bit. If you
+prefer to invoke it directly, first run:
 
 ```bash
-bash scripts/create-website-datafile.sh
+chmod +x scripts/create-website-datafile.sh
+./scripts/create-website-datafile.sh
 ```
 
 The wrapper removes existing `logs/*.log` files and `outputs/*.csv` and
@@ -186,7 +215,7 @@ the results automatically.
 The wrapper accepts custom input, output, log, and workbook locations:
 
 ```bash
-./scripts/create-website-datafile.sh \
+bash scripts/create-website-datafile.sh \
   --input-dir /path/to/spreadsheets \
   --documents-dir /path/to/source-documents \
   --output-dir /path/to/output \
@@ -205,12 +234,31 @@ For example, run the repository's sample workbook and documents from
 `data-prep` with:
 
 ```bash
-./scripts/create-website-datafile.sh \
+bash scripts/create-website-datafile.sh \
   --input-dir ../examples \
   --documents-dir ../examples/documents
 ```
 
-Run `./scripts/create-website-datafile.sh --help` to see the available options.
+Run `bash scripts/create-website-datafile.sh --help` to see the available
+options.
+
+## What else is needed?
+
+Nothing else is required to generate the files locally once Python, the Python
+packages, a correctly structured workbook, and the source documents are in
+place. For a complete website publishing workflow, account for these additional
+operational steps:
+
+- The pipeline does not copy its results into the Jekyll site or publish them.
+  Add a deliberate copy/build/deploy step after reviewing the outputs.
+- The pipeline clears old top-level CSV and JSON outputs, but not
+  `outputs/documents/`. Remove documents that are no longer in the catalogue so
+  stale files are not deployed.
+- `inputs/`, `outputs/`, and `logs/` are intentionally ignored by Git apart from
+  their `.gitkeep` files. Store the authoritative workbook and documents in an
+  appropriate managed location and back them up separately.
+- Treat warnings as data-quality failures to investigate: a zero exit code does
+  not guarantee that every spreadsheet record or document was included.
 
 ## Script reference
 
