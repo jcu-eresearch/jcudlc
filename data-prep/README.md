@@ -21,7 +21,7 @@ The pipeline:
 
 The generated website files are:
 
-- `outputs/library-index.json` — the processed catalogue records.
+- `outputs/jcudlc-data.json` — the processed catalogue records.
 - `outputs/query-config.json` — search fields, filter aggregations, and sorting
   presets.
 - `outputs/library-config.json` — display, filtering, and field behaviour.
@@ -267,7 +267,7 @@ operational steps:
 | `create-website-datafile.sh` | Validates paths, clears prior CSV/JSON/log outputs, uses the project virtual environment, and runs the pipeline. |
 | `parse-excel-file.py` | Reads Excel, applies control rows, drops records without an ID, validates required columns, and writes the intermediate CSV/configuration CSV files. |
 | `get-library-docs.py` | Finds source documents recursively, copies active open-access files, normalises filenames, and updates the intermediate CSV. |
-| `create-library-index.py` | Filters records, validates access types and open files, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `library-index.json` and `query-config.json`. |
+| `create-library-index.py` | Filters records, validates access types and open files, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `jcudlc-data.json` and `query-config.json`. |
 | `create-library-config.py` | Converts the control-row CSV files into `library-config.json`. |
 | `confighelper.py` | Loads and validates `library-config.yml` and resolves runtime paths. |
 | `libhelper.py` | Provides shared filename normalisation. |

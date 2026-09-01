@@ -8,7 +8,7 @@
 # the logs folder. Search for "warn" as well as "error".
 #
 # After the python scripts have all run successfully there will be a
-# library-index.json file in ../src/components. Now the website can
+# jcudlc-data.json file in ../src/components. Now the website can
 # be built.
 #
 # This script assumes that a virtual environment named .venv has been

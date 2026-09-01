@@ -2,7 +2,7 @@
 """ create-library-index.py
 
     This reads the library-index spreadsheet and generates a
-    library-index.json file from the information in the spreadsheet.
+    jcudlc-data.json file from the information in the spreadsheet.
 
     The paths and names of files are all defined in constants at
     the top of the file, as are the column names for the csv file.

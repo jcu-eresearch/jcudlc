@@ -312,7 +312,7 @@ def get_internal_files(
         multi_option_config=output_dir / "multi-option-config.csv",
         excel_file=_resolve_excel_file(input_dir, excel_file),
         libindex_csv=output_dir / "library-index.csv",
-        libindex_json=output_dir / "library-index.json",
+        libindex_json=output_dir / "jcudlc-data.json",
         library_config_json=output_dir / "library-config.json",
     )
 
