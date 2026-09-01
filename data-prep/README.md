@@ -60,7 +60,7 @@ cd data-prep
 python3 -m venv scripts/.venv
 scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
 bash scripts/create-website-datafile.sh \
-  --input-dir ../examples \
+  --excel-file ../examples/library-index.xlsx \
   --documents-dir ../examples/documents
 ```
 
@@ -80,13 +80,19 @@ data-prep/
 └── scripts/
 ```
 
-The spreadsheet and document source directories are configured independently.
-Their defaults are declared near the top of `scripts/create-website-datafile.sh`:
+The workbook, document source, output, and log paths are configured under
+`runtime` in `scripts/library-config.yml`:
 
-```bash
-INPUT_DIR=inputs
-DOCUMENTS_DIR=inputs/documents
+```yaml
+runtime:
+  excel_file: inputs/library-index.xlsx
+  documents_dir: inputs/documents
+  output_dir: outputs
+  log_dir: logs
 ```
+
+Relative paths are resolved from the directory where the pipeline is run. The
+wrapper and individual Python scripts use these same defaults.
 
 The script creates `logs/`, `outputs/`, and `outputs/documents/` if necessary.
 Create the source documents directory yourself and place the documents there.
@@ -212,30 +218,28 @@ the results automatically.
 
 ## Use non-default paths
 
-The wrapper accepts custom input, output, log, and workbook locations:
+The wrapper accepts command-line overrides for the configured workbook,
+document, output, and log paths:
 
 ```bash
 bash scripts/create-website-datafile.sh \
-  --input-dir /path/to/spreadsheets \
+  --excel-file /path/to/spreadsheets/catalogue.xlsx \
   --documents-dir /path/to/source-documents \
   --output-dir /path/to/output \
-  --log-dir /path/to/logs \
-  --excel-file catalogue.xlsx
+  --log-dir /path/to/logs
 ```
 
-`--input-dir` controls only the spreadsheet input directory.
-`--documents-dir` directly identifies the source document directory; it is not
-resolved below `--input-dir`. If `--excel-file` is only a filename, it is
-resolved inside `--input-dir`. A relative spreadsheet path containing `/`, or an
-absolute path, is used as supplied. Copied documents are written to a
-`documents/` directory below the selected output directory.
+`--excel-file` directly identifies the workbook; there is no separate input
+directory setting. Relative override paths are resolved from the directory in
+which the command is run. Copied documents are written to a `documents/`
+directory below the selected output directory.
 
 For example, run the repository's sample workbook and documents from
 `data-prep` with:
 
 ```bash
 bash scripts/create-website-datafile.sh \
-  --input-dir ../examples \
+  --excel-file ../examples/library-index.xlsx \
   --documents-dir ../examples/documents
 ```
 

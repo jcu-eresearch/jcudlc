@@ -1,5 +1,12 @@
 # Configuration for generating website data from the library spreadsheet.
 
+runtime:
+  # Relative paths are resolved from the directory where the scripts are run.
+  excel_file: inputs/library-index.xlsx
+  documents_dir: inputs/documents
+  output_dir: outputs
+  log_dir: logs
+
 excel:
   sheet: MAIN
   # These are spreadsheet row numbers, starting at 1, as shown in Excel.

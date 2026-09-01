@@ -13,12 +13,6 @@ except ImportError as exc:
 
 
 CONFIG_FILE = Path(__file__).with_name("library-config.yml")
-SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_INPUT_DIR = "inputs"
-DEFAULT_DOCUMENTS_DIR = "inputs/documents"
-DEFAULT_OUTPUT_DIR = "outputs"
-DEFAULT_LOG_DIR = "logs"
-DEFAULT_EXCEL_FILE = "library-index.xlsx"
 
 
 @dataclass(frozen=True)
@@ -85,8 +79,15 @@ class General:
 
 
 @dataclass(frozen=True)
+class RuntimeDefaults:
+    excel_file: str
+    documents_dir: str
+    output_dir: str
+    log_dir: str
+
+
+@dataclass(frozen=True)
 class LocalPaths:
-    input_dir: Path
     output_dir: Path
     log_dir: Path
     doc_display_config: Path
@@ -116,13 +117,6 @@ def _optional(mapping, path, default):
         return default
 
 
-def _resolve_path(path_value):
-    path = Path(path_value).expanduser()
-    if path.is_absolute():
-        return path
-    return (SCRIPT_DIR / path).resolve()
-
-
 def _resolve_runtime_path(path_value):
     path = Path(path_value).expanduser()
     if path.is_absolute():
@@ -130,40 +124,34 @@ def _resolve_runtime_path(path_value):
     return (Path.cwd() / path).resolve()
 
 
-def _resolve_excel_file(input_dir, excel_file):
-    path = Path(excel_file).expanduser()
-    if path.is_absolute() or path.parent != Path("."):
-        return _resolve_runtime_path(path)
-    return input_dir / path
-
-
 def add_runtime_path_arguments(parser):
     parser.add_argument(
-        "--input-dir",
-        default=DEFAULT_INPUT_DIR,
-        help=f"input directory containing the spreadsheet (default: ./{DEFAULT_INPUT_DIR})",
-    )
-    parser.add_argument(
         "--documents-dir",
-        default=DEFAULT_DOCUMENTS_DIR,
-        help=f"input directory containing source documents (default: ./{DEFAULT_DOCUMENTS_DIR})",
+        default=runtime_defaults.documents_dir,
+        help=(
+            "input directory containing source documents "
+            f"(default: {runtime_defaults.documents_dir})"
+        ),
     )
     parser.add_argument(
         "--output-dir",
-        default=DEFAULT_OUTPUT_DIR,
-        help=f"output directory for generated CSV and JSON files (default: ./{DEFAULT_OUTPUT_DIR})",
+        default=runtime_defaults.output_dir,
+        help=(
+            "output directory for generated CSV and JSON files "
+            f"(default: {runtime_defaults.output_dir})"
+        ),
     )
     parser.add_argument(
         "--log-dir",
-        default=DEFAULT_LOG_DIR,
-        help=f"log directory used by wrapper scripts (default: ./{DEFAULT_LOG_DIR})",
+        default=runtime_defaults.log_dir,
+        help=f"log directory used by wrapper scripts (default: {runtime_defaults.log_dir})",
     )
     parser.add_argument(
         "--excel-file",
-        default=DEFAULT_EXCEL_FILE,
+        default=runtime_defaults.excel_file,
         help=(
-            "Excel file name inside input-dir, or a relative/absolute path "
-            f"(default: {DEFAULT_EXCEL_FILE})"
+            "path to the Excel workbook "
+            f"(default: {runtime_defaults.excel_file})"
         ),
     )
 
@@ -201,8 +189,13 @@ def get_sheet_config(config):
 
 
 def get_docs_config(config, documents_dir=None, output_dir=None):
-    documents_dir = _resolve_runtime_path(documents_dir or DEFAULT_DOCUMENTS_DIR)
-    output_dir = _resolve_runtime_path(output_dir or DEFAULT_OUTPUT_DIR)
+    defaults = get_runtime_defaults(config)
+    documents_dir = _resolve_runtime_path(
+        defaults.documents_dir if documents_dir is None else documents_dir
+    )
+    output_dir = _resolve_runtime_path(
+        defaults.output_dir if output_dir is None else output_dir
+    )
     return Docs(
         file_pattern=_require(config, "documents.file_pattern"),
         src_path=documents_dir,
@@ -260,6 +253,21 @@ def get_general_config(config):
     return General(missing_value_token=_require(config, "general.missing_value_token"))
 
 
+def get_runtime_defaults(config):
+    values = {
+        "excel_file": _require(config, "runtime.excel_file"),
+        "documents_dir": _require(config, "runtime.documents_dir"),
+        "output_dir": _require(config, "runtime.output_dir"),
+        "log_dir": _require(config, "runtime.log_dir"),
+    }
+    for name, value in values.items():
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"runtime.{name} must be a non-empty string")
+        if "\n" in value or "\t" in value:
+            raise ValueError(f"runtime.{name} must not contain tabs or newlines")
+    return RuntimeDefaults(**values)
+
+
 def get_query_config(config):
     query_sortings = {}
     sortings = _optional(config, "query.sortings", {})
@@ -292,17 +300,21 @@ def get_query_config(config):
 
 def get_internal_files(
     config,
-    input_dir=None,
     output_dir=None,
     log_dir=None,
     excel_file=None,
 ):
-    input_dir = _resolve_runtime_path(input_dir or DEFAULT_INPUT_DIR)
-    output_dir = _resolve_runtime_path(output_dir or DEFAULT_OUTPUT_DIR)
-    log_dir = _resolve_runtime_path(log_dir or DEFAULT_LOG_DIR)
-    excel_file = excel_file or DEFAULT_EXCEL_FILE
+    defaults = get_runtime_defaults(config)
+    output_dir = _resolve_runtime_path(
+        defaults.output_dir if output_dir is None else output_dir
+    )
+    log_dir = _resolve_runtime_path(
+        defaults.log_dir if log_dir is None else log_dir
+    )
+    excel_file = _resolve_runtime_path(
+        defaults.excel_file if excel_file is None else excel_file
+    )
     return LocalPaths(
-        input_dir=input_dir,
         output_dir=output_dir,
         log_dir=log_dir,
         doc_display_config=output_dir / "doc-display-config.csv",
@@ -310,7 +322,7 @@ def get_internal_files(
         filter_config=output_dir / "filter-config.csv",
         query_config=output_dir / "query-config.json",
         multi_option_config=output_dir / "multi-option-config.csv",
-        excel_file=_resolve_excel_file(input_dir, excel_file),
+        excel_file=excel_file,
         libindex_csv=output_dir / "library-index.csv",
         libindex_json=output_dir / "jcudlc-data.json",
         library_config_json=output_dir / "library-config.json",
@@ -323,7 +335,6 @@ def configure_runtime_paths(args):
     docs = get_docs_config(config, args.documents_dir, args.output_dir)
     files = get_internal_files(
         config,
-        args.input_dir,
         args.output_dir,
         args.log_dir,
         args.excel_file,
@@ -332,6 +343,7 @@ def configure_runtime_paths(args):
 
 
 config = load_config()
+runtime_defaults = get_runtime_defaults(config)
 sheet_config = get_sheet_config(config)
 docs = get_docs_config(config)
 label = get_label_config(config)
@@ -342,3 +354,26 @@ urls = get_urls(config)
 files = get_internal_files(config)
 general = get_general_config(config)
 query = get_query_config(config)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--print-runtime-defaults",
+        action="store_true",
+        help="print tab-separated runtime defaults for the Bash wrapper",
+    )
+    args = parser.parse_args()
+    if args.print_runtime_defaults:
+        print(
+            "\t".join(
+                (
+                    str(files.excel_file),
+                    str(docs.src_path),
+                    str(files.output_dir),
+                    str(files.log_dir),
+                )
+            )
+        )

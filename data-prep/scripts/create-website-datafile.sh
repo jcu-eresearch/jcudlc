@@ -13,8 +13,8 @@
 #
 # This script assumes that a virtual environment named .venv has been
 # created for the scripts directory.
-# It also assumes that there are the following folders under the directory
-# where you run this command:  inputs, outputs, logs.
+# Runtime paths are configured in library-config.yml and can be overridden with
+# command-line arguments.
 #
 
 #
@@ -22,18 +22,23 @@ FAILURE=1
 SUCCESS=0
 #
 SCRIPTS_DIR=$(cd "$(dirname "$0")" && pwd)
-LOG_DIR=logs
-INPUT_DIR=inputs
-DOCUMENTS_DIR=inputs/documents
-OUTPUT_DIR=outputs
-EXCEL_FILE=library-index.xlsx
-WEBSITE_SRC_PATH=../src/components
-#
 VENV=$SCRIPTS_DIR/.venv
 PYTHON_BIN=$VENV/bin/python
+WEBSITE_SRC_PATH=../src/components
+
+if [ ! -x "$PYTHON_BIN" ]; then
+  echo "Python virtual environment not found at $VENV."
+  exit $FAILURE
+fi
+
+RUNTIME_CONFIG=$("$PYTHON_BIN" "$SCRIPTS_DIR/confighelper.py" --print-runtime-defaults) || {
+  echo "Unable to load runtime defaults from $SCRIPTS_DIR/library-config.yml."
+  exit $FAILURE
+}
+IFS=$'\t' read -r EXCEL_FILE DOCUMENTS_DIR OUTPUT_DIR LOG_DIR <<< "$RUNTIME_CONFIG"
 
 usage() {
-  echo "Usage: $0 [--input-dir DIR] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR] [--excel-file FILE]"
+  echo "Usage: $0 [--excel-file FILE] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR]"
 }
 
 require_value() {
@@ -46,11 +51,6 @@ require_value() {
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --input-dir)
-      require_value "$1" "$2"
-      INPUT_DIR="$2"
-      shift 2
-      ;;
     --documents-dir)
       require_value "$1" "$2"
       DOCUMENTS_DIR="$2"
@@ -83,17 +83,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-case "$EXCEL_FILE" in
-  /*|*/*)
-    LIBRARY_INDEX="$EXCEL_FILE"
-    ;;
-  *)
-    LIBRARY_INDEX="$INPUT_DIR/$EXCEL_FILE"
-    ;;
-esac
-
 PYTHON_PATH_ARGS=(
-  --input-dir "$INPUT_DIR"
   --documents-dir "$DOCUMENTS_DIR"
   --output-dir "$OUTPUT_DIR"
   --log-dir "$LOG_DIR"
@@ -113,8 +103,8 @@ print_finish_time() {
 
 trap print_finish_time EXIT
 
-if [ ! -f "$LIBRARY_INDEX" ]; then
-  echo "$LIBRARY_INDEX is missing, no processing can be done."
+if [ ! -f "$EXCEL_FILE" ]; then
+  echo "$EXCEL_FILE is missing, no processing can be done."
   exit $FAILURE
 fi
 
@@ -137,10 +127,6 @@ rm -f "$OUTPUT_DIR"/*.json
 # Use the virtual environment's interpreter directly. This avoids relying on
 # absolute paths embedded in an activation script when the repository is moved.
 echo "Using Python virtual environment $VENV"
-if [ ! -x "$PYTHON_BIN" ]; then
-  echo "Python virtual environment not found at $VENV."
-  exit $FAILURE
-fi
 
 PYTHON_SCRIPT_NAME=parse-excel-file
 echo "Running $PYTHON_SCRIPT_NAME.py ..."
