@@ -3,7 +3,7 @@
     "version": "0.5.0",
     "copyright": "copyright (c) James Cook University",
 
-    "dataUrl": "library-index.json",
+    "dataUrl": "jcudlc-data.json",
     "hideValues": ["", "NO VALUE"],
     "noFilter": ["ID", "Title", "Description", "Volume/Issue", "PDF_file_name"],
     "titleFields": ["Title"],
