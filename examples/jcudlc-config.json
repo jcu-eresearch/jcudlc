@@ -1,0 +1,81 @@
+{
+    "dataUrl": "library-index.json",
+    "hideValues": [
+        "",
+        "n/a"
+    ],
+    "noFilter": [
+        "ID",
+        "Title",
+        "Keywords",
+        "PDF_file_name",
+        "Published_URL",
+        "Portal_Status",
+        "Summary",
+        "Traditional_or_Local_Name",
+        "Project",
+        "Notes_Internal",
+        "URL",
+        "Icon"
+    ],
+    "quietFields": [
+        "Notes_Internal",
+        "URL",
+        "Icon"
+    ],
+    "quietLabel": "Additional details >",
+    "quietLabelFormat": "faded italic center smaller",
+    "maxResultCount": 200,
+    "iconTooltip": "Access",
+    "hideFromSearch": [
+        "ID",
+        "Year",
+        "Authors",
+        "Species_Group",
+        "Region",
+        "Habitat",
+        "Access",
+        "PDF_file_name",
+        "Published_URL",
+        "Portal_Status",
+        "Traditional_or_Local_Name",
+        "Conservation_Status",
+        "Project",
+        "Notes_Internal",
+        "URL",
+        "Icon"
+    ],
+    "supportText": "contact eResearch@jcu.edu.au if problems persist",
+    "fields": {
+        "Title": {
+            "display": "unlabeled header",
+            "format": "bold"
+        },
+        "Year": {
+            "filter": "category"
+        },
+        "Authors": {
+            "filter": "category"
+        },
+        "Species_Group": {
+            "filter": "category",
+            "multiOption": true
+        },
+        "Region": {
+            "filter": "category"
+        },
+        "Habitat": {
+            "filter": "category",
+            "multiOption": true
+        },
+        "Access": {
+            "filter": "category"
+        },
+        "Conservation_Status": {
+            "filter": "category"
+        },
+        "Keywords": {
+            "multiOption": true
+        }
+    }
+}
