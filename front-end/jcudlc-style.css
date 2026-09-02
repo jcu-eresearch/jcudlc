@@ -190,8 +190,8 @@
         height: 2em;
         line-height: 2em;
         border-radius: 2em;
-        background-color: var(--data-item);
-        color: var(--data-text);
+        background-color: var(--interface-bg);
+        color: var(--interface-text);
     }
     .filter.text .searchNow {
         font-family: inherit;
@@ -203,8 +203,9 @@
         width: 1.75em;
         border-radius: 1em;
         border: none;
-        background-color: var(--interface-bg);
-        color: var(--interface-text);
+        font-family: 'Material Symbols Outlined';
+        background-color: var(--interface-text);
+        color: var(--interface-bg);
     }
     .filterList {
         padding: 0.5em 0 0.5em 1em;

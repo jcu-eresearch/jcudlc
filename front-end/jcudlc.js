@@ -286,7 +286,8 @@ function buildTextFilter() {
     let textInput = makeNode('input', 'searchFilterText')
     textInput.setAttribute('type', 'text')
     textInput.setAttribute('placeholder', 'search...')
-    let textButton = makeNode('button', 'searchNow clickable', '\u{1F50E}\uFE0E')
+    // let textButton = makeNode('button', 'searchNow clickable', '\u{1F50E}\uFE0E')
+    let textButton = makeNode('button', 'searchNow clickable', 'search')
 
     // clicking the button will add the string to the filters
     textButton.addEventListener('click', (event) => { 
