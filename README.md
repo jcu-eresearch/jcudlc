@@ -126,6 +126,7 @@ to run a **https** server at https://localhost. The first time you run this you 
 - [ ] version numbering - write to console, check against config version, etc
 - [ ] "about" key in the config that describes the tool and gives a URL
 - [ ] thorough documentation
+- [ ] divider string (and format?) for displaying multi-value lists
 
 #### Lower Priority
 

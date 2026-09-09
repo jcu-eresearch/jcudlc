@@ -4,7 +4,10 @@
 const jcudlcVersion = '0.5.0'
 console.log(`JCUDLC version ${jcudlcVersion}`)
 // ------------------------------------------------------ 
-const defaultHeaderFields = ['header', 'title', 'name']
+const defaultTitleFields = ['header', 'title', 'name']
+const defaultTitleFormat = 'bold unlabelled'
+const defaultSubtitleFields = ['author', 'authors', 'editors']
+const defaultSubtitleFormat = 'italic'
 const defaultMaxResultCount = 100
 let config = {}
 let allFields = []
@@ -63,7 +66,8 @@ function makeNode(tag, className, ...content) {
 }
 // ------------------------------------------------------ 
 function getFieldLabel(fieldId) {
-    return config.fields[fieldId]?.label || fieldId.replaceAll('_', ' ')
+    // return config?.aliases[fieldId] || fieldId.replaceAll('_', ' ')
+    return fieldId
 }
 // ------------------------------------------------------ 
 function findUsefulField(item, fieldId) {
@@ -79,29 +83,19 @@ function findUsefulField(item, fieldId) {
 }
 // ------------------------------------------------------ 
 // make a display field with a label and value 
-// (unless it should not show the label, or 
-// should be hidden entirely)
-function makeField(fieldId, fieldValue, labelled, format) {
-
-    fieldInfo = config.fields[fieldId]
-
-    // if the display format says not to show it, return nothing
-    if (fieldInfo?.display === 'hide') return ''
+function makeField(fieldId, fieldValue, format) {
 
     // if the value is a hideValue, then return nothing
     if (config.hideValues.includes(fieldValue)) return ''
 
     let field
     let className = ['field', format].join(' ')
-    if (labelled) {
-        // label is the override from the config, or the fieldId with underscores replaced by spaces
-        label = getFieldLabel(fieldId)
-        let fieldLabel = makeNode('dt', 'fieldLabel', label)
-        let fieldContent = makeNode('dd', 'fieldValue', fieldValue)
-        field = makeNode('dl', className, fieldLabel, fieldContent)
-    } else {
-        field = makeNode('p', className, fieldValue)
-    }
+
+    // label is the override from the config, or the fieldId with underscores replaced by spaces
+    label = getFieldLabel(fieldId)
+    let fieldLabel = makeNode('dt', 'fieldLabel', label)
+    let fieldContent = makeNode('dd', 'fieldValue', fieldValue)
+    field = makeNode('dl', className, fieldLabel, fieldContent)
     return field
 }
 // ------------------------------------------------------ 
@@ -190,7 +184,6 @@ function applyConfig() {
             applyCssVar(styles, cssVarName, config[configKey])
         }
     })
-    console.log('applying styles: ', styles.cssRules)
     document.adoptedStyleSheets.push(styles)
 }
 // ------------------------------------------------------ 
@@ -310,9 +303,6 @@ function buildFilter(fieldId) {
 
     // if the config says not to filter by this, skip it
     if (config.noFilter.includes(fieldId)) return
-
-    // if the config says not to filter on this field, skip it
-    if (config.fields[fieldId]?.filter === 'none') return
 
     // get field's domain from all items list
     let domain = []
@@ -542,34 +532,38 @@ function buildResult(item) {
         header.append(icon)
     }
 
-    let fieldIdList = Object.keys(config.fields)
-
-    // are there any fields nominated for the header?
-    let headerFields = fieldIdList.filter( fieldId => config.fields[fieldId].display?.includes('header') )
-
-    if (headerFields.length === 0) {
-        // if the config doesn't help find header fields, look at
-        // each of our default header field names in turn
-        defaultHeaderFields.forEach( fieldId => {
-             let headerField = findUsefulField(item, fieldId)
-             if (headerField) { 
-                headerFields.push(headerField)
-            }
-        })
-        // if we didn't have config'd headers and also didn't find
-        // any default header fieldnames, use the item's first field
-        if (headerFields.length === 0) {
-            headerFields.push(Object.keys(item)[0])
+    let blankHeader = true
+    const titleFields = config['titleFields'] || defaultTitleFields
+    const titleFormat = config['titleFormat'] || defaultTitleFormat
+    titleFields.forEach( fieldId => {
+        let fieldValue = item[fieldId]
+        if (fieldValue) {
+            let field = makeField(fieldId, fieldValue, titleFormat)
+            header.append( makeNode('p', '', field) )
+            blankHeader = false
         }
-    }
-
-    headerFields.forEach( fieldId => {
-        cfg = config.fields[fieldId] || { display: '', format: '' }
-        let field = makeField(fieldId, item[fieldId], !cfg.display.includes('unlabel'), cfg.format)
-        header.append( makeNode('p', '', field) )
     })
 
+    const subtitleFields = config['subtitleFields'] || defaultSubtitleFields
+    const subtitleFormat = config['subtitleFormat'] || defaultSubtitleFormat
+    subtitleFields.forEach( fieldId => {
+        let fieldValue = item[fieldId]
+        if (fieldValue) {
+            let field = makeField(fieldId, fieldValue, subtitleFormat)
+            header.append( makeNode('p', '', field) )
+            blankHeader = false
+        }
+    })
 
+    // if we didn't have config'd headers and also didn't find
+    // any default header fieldnames, use the item's first field
+    if (blankHeader) {
+        const firstField = Object.keys(item)[0]
+        let field = makeField(firstField, item[firstField], titleFormat)
+        header.append( makeNode('p', '', field) )
+    }
+
+    // NEW HEADERS ^^^^^^^^^^^^^^^^^^^^^^^^
 
     header.addEventListener('click', (event) => {
         // when the title is clicked, add or remove 
@@ -582,20 +576,24 @@ function buildResult(item) {
 
     let details = makeNode('div', 'details')
     for (var fieldKey in item) {
-        if (!quietFields.includes(fieldKey) && !headerFields.includes(fieldKey)) {
+        if (!quietFields.includes(fieldKey) 
+                && !titleFields.includes(fieldKey) 
+                && !subtitleFields.includes(fieldKey)
+        ) {
             let fieldValue = item[fieldKey]
-            let field = makeField(fieldKey, item[fieldKey], true)
+            let field = makeField(fieldKey, item[fieldKey])
             details.append(field)
         }
     }
 
     // "quiet" details
-    let hasQuiet = true
+    let hasQuiet = false
     let quietDetails = makeNode('div', 'quiet')
     for (var fieldKey in item) {
         if (quietFields.includes(fieldKey)) {
+            hasQuiet = true
             let fieldValue = item[fieldKey]
-            let field = makeField(fieldKey, item[fieldKey], true)
+            let field = makeField(fieldKey, item[fieldKey])
             quietDetails.append(field)
         }
     }
