@@ -105,36 +105,22 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Higher Priority
 
-- filtering
-    - [x] AND between all options
-    - [x] show active filters
-    - [x] active filters have an "x" button to remove that filter
-    - [x] cap at 200 items (or config supplied cap)
-    - [x] string search
-        - [x] support string searches as a filter type
-        - [x] allow "hide from search" fields config
-    - [ ] for each filter item, show result count for that additional filter
+- [ ] for each filter item, show result count for that additional filter
 - [ ] mobile layout
-- [_] config file
-    - [x] create config file
-    - [x] include json data filename
-    - [x] quiet field show/hide config
-    - [x] include contact info for support
-    - [ ] colour config
-    - [ ] support font specification (default to inheriting it)
-- [ ] _admin or some similar url thing to switch on "dev" mode
-- [ ] version numbering - write to console, check against config version, etc
-- [ ] "about" key in the config that describes the tool and gives a URL
+- [ ] config: support font specification (default to inheriting it)
+- [ ] version numbering
+    - [x] write to console
+    - [ ] check against config version, etc
 - [ ] thorough documentation
 - [ ] divider string (and format?) for displaying multi-value lists
 
 #### Lower Priority
 
+- [ ] _admin or some similar url thing to switch on "dev" mode
 - [ ] URL looking fields (URL, Link, website, email) that renders a clicky-link
-- [ ] fix message backgrounds (good and bad messages don't have separately customisable bgs)
 - [ ] range for numeric field
 - [ ] sorting options
-- [ ] open all / close all result discosure / show details
+- [ ] open all / close all for the result discosure/show details
 - [ ] optional icon feature; on hover, or something, offer a button to copy the link
 - [ ] "show all" button to see every item instead of the cap
 - [ ] make popup-on-icon-hover text a bit larger than browser default 
@@ -156,5 +142,20 @@ to run a **https** server at https://localhost. The first time you run this you 
     - [x] if there's a URL, do that when the icon is clicked
     - [x] support icon field specifying the URL field for clicks ("url" or "URL" field is the default)
     - [x] support specifying a field to supply a pop-up tooltip for the icon ("iconTooltip" is the default)
+- [x] "about" key in the config that names the tool, with version number
+- [x] fix message backgrounds (good and bad messages don't have separately customisable bgs)
+- [x] create config file
+- [x] config: include json data filename
+- [x] config: quiet field show/hide config
+- [x] config: include contact info for support
+- [x] config: colour config
+- [x] filtering
+    - [x] AND between all options
+    - [x] show active filters
+    - [x] active filters have an "x" button to remove that filter
+    - [x] cap at 200 items (or config supplied cap)
+    - [x] string search
+        - [x] support string searches as a filter type
+        - [x] allow "hide from search" fields config
 
 
