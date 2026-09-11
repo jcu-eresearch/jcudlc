@@ -563,8 +563,6 @@ function buildResult(item) {
         header.append( makeNode('p', '', field) )
     }
 
-    // NEW HEADERS ^^^^^^^^^^^^^^^^^^^^^^^^
-
     header.addEventListener('click', (event) => {
         // when the title is clicked, add or remove 
         // the "closed" class on the parent result
