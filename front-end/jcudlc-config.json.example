@@ -1,13 +1,14 @@
 {
     "project": "JCUDLC - JCU Digital Library Catalogue",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "copyright": "copyright (c) James Cook University",
 
     "dataUrl": "jcudlc-data.json",
+
     "hideValues": ["", "NO VALUE"],
     "noFilter": ["ID", "Title", "Description", "Volume/Issue", "PDF_file_name"],
     "titleFields": ["Title"],
-    "titleFormat": "bold",
+    "titleFormat": "bold unlabelled",
     "subtitleFields": ["Authors"],
     "subtitleFormat": "italic",
     "quietFields": ["ID", "PDF_file_name", "URL", "Icon"],
@@ -17,8 +18,6 @@
     "iconTooltip": "Access_Rights",
     "hideFromSearch": ["PDF_file_name", "URL", "Year"],
     "supportText": "contact eResearch@jcu.edu.au if problems persist",
-
-    "font": "",
 
     "filterText": "#ddd",
     "filterColumnBackground": "#111",
@@ -38,19 +37,6 @@
     "alertInfoText": "#037",
     "alertInfoBackground": "#ecf6ff",
     "alertErrorText": "#700",
-    "alertErrorBackground": "#fee",
+    "alertErrorBackground": "#fee"
 
-    "fields": {
-        "Title": {
-            "display": "unlabeled header",
-            "format": "bold"
-        },
-        "Authors": {
-            "display": "header",
-            "format": "italic"
-        },
-        "Year":          { "filter": "range" }, 
-        "Language":      { "filter": "category" },
-        "Work_Location": { "label":  "Location" }
-    }
 }

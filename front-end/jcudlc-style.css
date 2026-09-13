@@ -1,4 +1,8 @@
 
+/*
+JCUDLC - JCU Digital Library Catalogue - v0.5.1 
+copyright (c) James Cook University
+*/
 @scope (#jcudlc) {
     /* box sizing inside the catalog */
     :scope {        
@@ -22,7 +26,7 @@
         --interface-bg: var(--jcudlc-interface-bg, var(--data-active));
         --interface-text: var(--jcudlc-interface-text, var(--data-text));
 
-        --corner: var(--jcudlc-corner, 0.5rem);
+        --corner: var(--jcudlc-corner, 0.5rem); 
 
         container-name: jcudlc;
         container-type: inline-size;
@@ -39,10 +43,11 @@
     .clickable  { cursor:      pointer }
     .bold       { font-weight: bold }
     .italic     { font-style:  italic }
-    .right      { text-align:  right }
-    .center     { text-align:  center }
     .faded      { opacity:     0.5 }
     .smaller    { font-size:   80% }
+    .bigger     { font-size:   125% }
+    .right      { justify-content: end;     text-align: right  }
+    .center     { justify-content: center;  text-align: center }
 
     /* -- message styles ------------------------------- */
     .message {
@@ -328,6 +333,7 @@
         min-width: 8em;
         padding-right: 1em;
     }
+    .result .field.unlabelled .fieldLabel { display: none; }
     .result .fieldValue {
         margin: 0;
         overflow-wrap: anywhere;
