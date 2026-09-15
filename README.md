@@ -117,6 +117,7 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Lower Priority
 
+- [ ] look up licencing for local hosting of the Material Symbols font
 - [ ] _admin or some similar url thing to switch on "dev" mode
 - [ ] URL looking fields (URL, Link, website, email) that renders a clicky-link
 - [ ] range for numeric field
