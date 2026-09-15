@@ -19,6 +19,8 @@
     "hideFromSearch": ["PDF_file_name", "URL", "Year"],
     "supportText": "contact eResearch@jcu.edu.au if problems persist",
 
+    "aliases": { "PDF_file_name": "PDF" },
+    
     "filterText": "#ddd",
     "filterColumnBackground": "#111",
     "filterItemBackground": "#222",

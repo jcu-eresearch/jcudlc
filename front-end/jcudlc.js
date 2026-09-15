@@ -66,8 +66,7 @@ function makeNode(tag, className, ...content) {
 }
 // ------------------------------------------------------ 
 function getFieldLabel(fieldId) {
-    // return config?.aliases[fieldId] || fieldId.replaceAll('_', ' ')
-    return fieldId
+    return config.aliases?.[fieldId] || fieldId.replaceAll('_', ' ')
 }
 // ------------------------------------------------------ 
 function findUsefulField(item, fieldId) {
