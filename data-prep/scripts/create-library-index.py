@@ -26,7 +26,6 @@ from confighelper import (
     icons,
     urls,
     files,
-    general,
     query,
 )
 
@@ -52,7 +51,7 @@ def split_multi_option_values(lib_data):
         lib_data[column] = (
             lib_data[column]
             .str.split(";")
-            .apply(lambda x: [item.strip() for item in x])
+            .apply(lambda x: [item.strip() for item in x] if x != [""] else [])
         )
         log.debug("split_multi_option_values: lib_data[{}]\n".format(lib_data[column]))
 
@@ -257,9 +256,9 @@ def create_query_config(log, lib_data, search_fields, filter_fields, multi_optio
             )
         )
         if field in multi_option_fields:
-            unique_filters = set(x for sublist in lib_data[field] for x in sublist)
+            unique_filters = set(x for sublist in lib_data[field] for x in sublist if x != "")
         else:
-            unique_filters = lib_data[field].unique().tolist()
+            unique_filters = [x for x in lib_data[field].unique().tolist() if x != ""]
 
         log.debug(
             "create_query_string: field {},  unique_filters: {}".format(
@@ -339,8 +338,8 @@ if __name__ == "__main__":
     # Read in data from the library-index.csv file and ensure that
     # there are no leading or trailing spaces on the contents
     lib_data = pd.read_csv(
-        files.libindex_csv, dtype="str", skipinitialspace=True
-    ).fillna(general.missing_value_token)
+        files.libindex_csv, dtype="str", skipinitialspace=True, keep_default_na=False
+    ).map(str.strip)
     log.info("Initial # rows loaded: {}".format(lib_data.index.size))
 
     lib_data = remove_nonactive_rows(log, lib_data)

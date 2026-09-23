@@ -10,7 +10,7 @@ import confighelper as cfg
 
 
 DEFAULT_DATA_URL = "jcudlc-data.json"
-DEFAULT_HIDE_VALUES = ["", cfg.general.missing_value_token]
+DEFAULT_HIDE_VALUES = [""]
 DEFAULT_QUIET_LABEL = "Additional details >"
 DEFAULT_QUIET_LABEL_FORMAT = "faded italic center smaller"
 DEFAULT_MAX_RESULT_COUNT = 200

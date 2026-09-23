@@ -172,7 +172,7 @@ and `report_one.pdf` would collide in the flat output directory).
 
 An `Access via publisher` record should contain a valid `Published_URL`.
 
-These values, the generated URL prefixes, icons, missing-value token, and query
+These values, the generated URL prefixes, icons, and query
 sorting presets can all be changed in `scripts/library-config.yml`.
 
 Some website-interface defaults are currently constants near the top of
@@ -314,5 +314,6 @@ index.
 ### A filter or multi-value field behaves incorrectly
 
 Check the exact control-row marker spelling. For multi-value fields, use `;` as
-the separator. Empty spreadsheet cells are emitted as the configured missing
-value token (`n/a` by default).
+the separator. Empty or whitespace-only spreadsheet cells remain empty in the
+CSV and JSON. Empty multi-value cells become empty arrays in the JSON.
+Literal text such as `n/a` remains text and is not treated as an empty cell.

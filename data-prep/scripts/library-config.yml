@@ -2,8 +2,8 @@
 
 runtime:
   # Relative paths are resolved from the directory where the scripts are run.
-  excel_file: inputs/library-index.xlsx
-  documents_dir: inputs/documents
+  excel_file: ../examples/library-index.xlsx
+  documents_dir: ../examples/documents
   output_dir: outputs
   log_dir: logs
 
@@ -54,9 +54,6 @@ website:
     download: file_download
     support: contact_support
     library: schedule
-
-general:
-  missing_value_token: n/a
 
 query:
   sortings:

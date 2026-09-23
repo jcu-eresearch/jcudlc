@@ -5,7 +5,7 @@
 
     "dataUrl": "jcudlc-data.json",
 
-    "hideValues": ["", "NO VALUE"],
+    "hideValues": [""],
     "noFilter": ["ID", "Title", "Description", "Volume/Issue", "PDF_file_name"],
     "titleFields": ["Title"],
     "titleFormat": "bold unlabelled",

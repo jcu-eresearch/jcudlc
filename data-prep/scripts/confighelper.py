@@ -74,11 +74,6 @@ class URLs:
 
 
 @dataclass(frozen=True)
-class General:
-    missing_value_token: str
-
-
-@dataclass(frozen=True)
 class RuntimeDefaults:
     excel_file: str
     documents_dir: str
@@ -249,10 +244,6 @@ def get_urls(config):
     )
 
 
-def get_general_config(config):
-    return General(missing_value_token=_require(config, "general.missing_value_token"))
-
-
 def get_runtime_defaults(config):
     values = {
         "excel_file": _require(config, "runtime.excel_file"),
@@ -352,7 +343,6 @@ status_types = get_status_values(config)
 icons = get_icons(config)
 urls = get_urls(config)
 files = get_internal_files(config)
-general = get_general_config(config)
 query = get_query_config(config)
 
 

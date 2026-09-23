@@ -85,7 +85,8 @@ function findUsefulField(item, fieldId) {
 function makeField(fieldId, fieldValue, format) {
 
     // if the value is a hideValue, then return nothing
-    if (config.hideValues.includes(fieldValue)) return ''
+    if (config.hideValues.includes(fieldValue) ||
+        (Array.isArray(fieldValue) && fieldValue.length === 0)) return ''
 
     let field
     let className = ['field', format].join(' ')
@@ -314,6 +315,7 @@ function buildFilter(fieldId) {
             fieldValue = [fieldValue]
         }
         fieldValue.forEach( val => {
+            if (config.hideValues.includes(val)) return
             if (!domain.includes(val)) {
                 domain.push(val)
             }

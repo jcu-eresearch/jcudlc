@@ -103,9 +103,9 @@ if __name__ == "__main__":
 
     with open(files.libindex_csv, encoding="utf-8") as fd:
         for row in csv.DictReader(fd):
-            # strip the trailing whitespace from each row value
+            # strip surrounding whitespace from each row value
             for key, value in row.items():
-                row[key] = value.rstrip()
+                row[key] = value.strip()
 
             log.debug(
                 "row[{}]({})  access_types.open({}) status_type.active({})  row[{}]({})".format(
@@ -182,7 +182,9 @@ if __name__ == "__main__":
 
     if not is_dry_run:
         # Normalise all the filenames in the labels.filename column of the library index
-        lib_data = pd.read_csv(files.libindex_csv, dtype="str", skipinitialspace=True).fillna("NO VALUE")
+        lib_data = pd.read_csv(
+            files.libindex_csv, dtype="str", skipinitialspace=True, keep_default_na=False
+        ).map(str.strip)
         lib_data[label.filename] = lib_data[label.filename].map(libhelper.get_normalised_filename)
         lib_data.to_csv(files.libindex_csv, index=False, encoding="utf-8")
 
