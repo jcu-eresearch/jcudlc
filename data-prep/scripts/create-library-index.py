@@ -12,7 +12,6 @@
 """
 import pandas as pd
 import json
-import os
 import logging
 import structlog
 import argparse
@@ -133,7 +132,7 @@ def remove_private_details(log, lib_data):
     return lib_data
 
 
-def remove_invalid_access_rows(log, lib_data):
+def replace_invalid_access_values(log, lib_data):
     valid_access_types = asdict(access_types).values()
 
     # Get a list of docs with an invalid access type
@@ -143,77 +142,81 @@ def remove_invalid_access_rows(log, lib_data):
 
     log.debug("valid access types are {}".format(valid_access_types))
 
-    # log a warning message for these problem docs
-    for index, row in problem_docs.iterrows():
+    for _, row in problem_docs.iterrows():
         log.warning(
-            "ID {} | Invalid value in column {}, [{}] ".format(row[label.id], label.access, row[label.access])
+            "ID {} | Invalid {} value {!r}; changed to {!r}. Correct the spreadsheet value in the next update.".format(
+                row[label.id], label.access, row[label.access], access_types.physical_library
+            )
         )
 
-    # log.debug("remove_invalid_access_rows: problem_docs\n{}".format(problem_docs))
-
-    # Drop any docs with invalid access values
-    lib_data = lib_data.drop(index=problem_docs.index.to_list())
+    lib_data.loc[problem_docs.index, label.access] = access_types.physical_library
     log.info(
-        "Number of docs dropped due invalid access types is {}".format(
-            problem_docs.index.size
+        "Number of invalid access values changed to {}: {}".format(
+            access_types.physical_library, problem_docs.index.size
         )
     )
 
     return lib_data
 
 
-def remove_openaccess_nofilename_rows(log, lib_data):
-    # Remove all rows where access is open and filename is empty
+def replace_openaccess_without_file(log, lib_data):
+    # Change open-access rows without a copied file to physical-library access.
 
     # Get the list of files for the library.
-    doc_list = os.listdir(docs.dest_path)
+    doc_list = {path.name for path in docs.dest_path.iterdir() if path.is_file()}
 
     # DEBUG - log the list of files in the library, displaying each file on a separate line
-    log.debug("Documents in the library: \n{}".format("\n".join(doc_list)))
+    log.debug("Documents in the library: \n{}".format("\n".join(sorted(doc_list))))
 
     # Get a list of the open access docs that don't have a file in the library
     problem_docs = lib_data[
         (lib_data[label.access] == access_types.open)
         & (~lib_data[label.filename].isin(doc_list))
     ]
-    # log a warning message for these problem docs
-    for index, doc in problem_docs.iterrows():
+    for _, doc in problem_docs.iterrows():
+        filename = doc[label.filename]
+        problem = (
+            "{} is blank".format(label.filename)
+            if filename == ""
+            else "{} {!r} has no matching file in {}".format(
+                label.filename, filename, docs.dest_path
+            )
+        )
         log.warning(
-            "ID {} | {} access document file is missing, {}".format(
-                doc[label.id], access_types.open, doc[label.filename]
+            "ID {} | {} for {} access; changed {} to {!r}. Correct the filename or add the PDF in the next update.".format(
+                doc[label.id], problem, access_types.open, label.access,
+                access_types.physical_library
             )
         )
 
-    # Drop any open access documents that we don't have a copy of the document for
-    lib_data = lib_data.drop(index=problem_docs.index.to_list())
+    lib_data.loc[problem_docs.index, label.access] = access_types.physical_library
     log.info(
-        "Number of docs dropped due to access is {} but no file found is {}".format(
-            access_types.open, problem_docs.index.size
+        "Number of {} records without a matching file changed to {}: {}".format(
+            access_types.open, access_types.physical_library, problem_docs.index.size
         )
     )
 
     return lib_data
 
 
-def remove_publisheraccess_nourl_rows(log, lib_data):
+def replace_publisheraccess_without_url(log, lib_data):
     # Get a list of the external access docs that don't have a URL in the lib data
     problem_docs = lib_data[
         (lib_data[label.access] == access_types.publisher)
         & (lib_data[label.publishedURL] == "")
     ]
-    # log a warning message for these problem docs
-    for index, doc in problem_docs.iterrows():
+    for _, doc in problem_docs.iterrows():
         log.warning(
-            "ID {} | Doc with {} access {} value is empty".format(
-                doc[label.id], access_types.publisher, label.publishedURL
+            "ID {} | {} is blank for {} record; changed {} to {!r}. Add the publisher URL in the next spreadsheet update.".format(
+                doc[label.id], label.publishedURL, access_types.publisher,
+                label.access, access_types.physical_library
             )
         )
 
-    # Drop any open access documents that we don't have a copy of the document for
-    lib_data = lib_data.drop(index=problem_docs.index.to_list())
+    lib_data.loc[problem_docs.index, label.access] = access_types.physical_library
     log.info(
-        "Number of docs dropped due to being {} but having no URL is {}".format(
-            access_types.publisher, problem_docs.index.size
+        "Number of {} records without a publisher URL changed to {}: {}".format(
+            access_types.publisher, access_types.physical_library, problem_docs.index.size
         )
     )
     return lib_data
@@ -343,13 +346,12 @@ if __name__ == "__main__":
     log.info("Initial # rows loaded: {}".format(lib_data.index.size))
 
     lib_data = remove_nonactive_rows(log, lib_data)
-    lib_data = remove_invalid_access_rows(log, lib_data)
-    lib_data = remove_openaccess_nofilename_rows(log, lib_data)
-    lib_data = remove_publisheraccess_nourl_rows(log, lib_data)
+    lib_data = replace_invalid_access_values(log, lib_data)
+    lib_data = replace_openaccess_without_file(log, lib_data)
+    lib_data = replace_publisheraccess_without_url(log, lib_data)
     lib_data = split_multi_option_values(lib_data)
     lib_data = set_url_and_icon(log, lib_data)
-    # must call remove_nonactive_rows last in case it removes a
-    # column needed for other processing
+    # Remove non-public columns after validation and URL/icon generation.
     lib_data = remove_private_details(log, lib_data)
 
     lib_data = create_library_index(log, is_dry_run, lib_data)

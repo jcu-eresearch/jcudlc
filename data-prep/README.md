@@ -15,8 +15,9 @@ The pipeline:
 3. Writes an intermediate cleaned CSV and four configuration CSV files.
 4. Copies active, open-access documents into the output directory and normalises
    spaces and `/` characters in their filenames to underscores.
-5. Removes inactive or unusable records, generates document URLs and icons, and
-   writes the website's library index and query configuration.
+5. Removes inactive records, changes records with invalid access or missing
+   access files/URLs to `Contact us`, generates URLs and icons, and writes the
+   website's library index and query configuration.
 6. Generates the display configuration used by the website.
 
 The generated website files are:
@@ -171,6 +172,12 @@ also remain unique after filename normalisation (for example, `report one.pdf`
 and `report_one.pdf` would collide in the flat output directory).
 
 An `Access via publisher` record should contain a valid `Published_URL`.
+If an active record has an invalid `Access` value, an `Open` record has no
+matching copied file, or an `Access via publisher` record has no URL, the
+record remains in the JSON with `Access` changed to `Contact us`. The index
+script logs a warning with the record ID and the problem to fix in the next
+spreadsheet update. The workbook and intermediate CSV retain their original
+values.
 
 These values, the generated URL prefixes, icons, and query
 sorting presets can all be changed in `scripts/library-config.yml`.
@@ -271,7 +278,7 @@ operational steps:
 | `create-website-datafile.sh` | Validates paths, clears prior CSV/JSON/log outputs, uses the project virtual environment, and runs the pipeline. |
 | `parse-excel-file.py` | Reads Excel, applies control rows, drops records without an ID, validates required columns, and writes the intermediate CSV/configuration CSV files. |
 | `get-library-docs.py` | Finds source documents recursively, copies active open-access files, normalises filenames, and updates the intermediate CSV. |
-| `create-library-index.py` | Filters records, validates access types and open files, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `jcudlc-data.json` and `query-config.json`. |
+| `create-library-index.py` | Removes inactive records, changes invalid or incomplete access details to `Contact us` with warnings, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `jcudlc-data.json` and `query-config.json`. |
 | `create-library-config.py` | Converts the control-row CSV files into `library-config.json`. |
 | `confighelper.py` | Loads and validates `library-config.yml` and resolves runtime paths. |
 | `libhelper.py` | Provides shared filename normalisation. |
@@ -292,7 +299,7 @@ Confirm that its row 6 heading exactly matches `scripts/library-config.yml` and
 that its row 2 cell contains `Filter_yes` or `Filter_no`. An unmarked column is
 dropped before required-column validation.
 
-### An open-access record is missing from the JSON
+### An open-access record appears as `Contact us`
 
 Check `logs/get-library-docs.log` and `logs/create-library-index.log`. Confirm
 that the record is `Active`, its access value is `Open`, and its
@@ -301,9 +308,9 @@ source directory (`inputs/documents/` by default).
 
 ### A record is unexpectedly omitted
 
-Check that `Portal_Status` is `Active`, `Access` is one of the configured values,
-and all access-specific information is present. The index-generation log reports
-how many records each validation step removes.
+Check that `Portal_Status` is `Active` and the record has an ID. Active records
+with invalid access or missing access-specific information remain in the JSON
+as `Contact us`; check `logs/create-library-index.log` for the warning.
 
 ### A column is missing from the final JSON
 
