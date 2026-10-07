@@ -112,8 +112,6 @@ to run a **https** server at https://localhost. The first time you run this you 
     - [x] write to console
     - [ ] check against config version, etc
 - [ ] thorough documentation
-- [ ] divider string (and format?) for displaying multi-value lists
-- [ ] config: support aliases `aliases: { "field_A": "Human Name A", ... }`
 
 #### Lower Priority
 
@@ -129,6 +127,8 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Complete
 
+- [x] divider string (and format?) for displaying multi-value lists
+- [x] config: support aliases `aliases: { "field_A": "Human Name A", ... }`
 - [x] defaults for when no fields are nominated as headers
 - [x] packaging: JS lib that you point at the div that should become the filterable list of items
     - [x] split into files

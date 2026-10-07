@@ -8,6 +8,8 @@ const defaultTitleFields = ['header', 'title', 'name']
 const defaultTitleFormat = 'bold unlabelled'
 const defaultSubtitleFields = ['author', 'authors', 'editors']
 const defaultSubtitleFormat = 'italic'
+const defaultSeparator = ' ⧸ ' // ⧸ is a U+29F8, Big Solidus
+const defaultSeparatorFormat = 'faded'
 const defaultMaxResultCount = 100
 let config = {}
 let allFields = []
@@ -33,9 +35,18 @@ configLoader.then( (cfgResponse) => {
             reportProgress('parsing data...')
             let itemParser = itemResponse.json()
             itemParser.then( (items) => {
-                reportProgress('preparing page...')
                 // here we have the items loaded from the JSON file
-                allItems = items
+                reportProgress('preparing data...')
+                allItems = items.map( i => {
+                    // turn every item value into an array if it isn't already
+                    Object.keys(i).forEach( key => {
+                        if (!Array.isArray(i[key])) {
+                            i[key] = [i[key]]
+                        }
+                    })
+                    return i
+                })
+                reportProgress('preparing page...')
                 applyConfig()
                 buildFilters()
                 applyFilters()
@@ -87,13 +98,26 @@ function makeField(fieldId, fieldValue, format) {
     // if the value is a hideValue, then return nothing
     if (config.hideValues.includes(fieldValue)) return ''
 
+    // check config for separator choices
+    let separatorString = config.separator || defaultSeparator
+    let separatorFormat = config.separatorFormat || defaultSeparatorFormat
+
     let field
     let className = ['field', format].join(' ')
-
+    let separator = makeNode('span', separatorFormat, separatorString)
+    
     // label is the override from the config, or the fieldId with underscores replaced by spaces
     label = getFieldLabel(fieldId)
     let fieldLabel = makeNode('dt', 'fieldLabel', label)
-    let fieldContent = makeNode('dd', 'fieldValue', fieldValue)
+
+    content = []
+    fieldValue.forEach( (val, index) => {
+        if (index > 0) {
+            content.push(separator.cloneNode(true))
+        }
+        content.push(val)
+    })
+    let fieldContent = makeNode('dd', 'fieldValue', ...content)
     field = makeNode('dl', className, fieldLabel, fieldContent)
     return field
 }
