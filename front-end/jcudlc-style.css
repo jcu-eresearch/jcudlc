@@ -1,6 +1,6 @@
 
 /*
-JCUDLC - JCU Digital Library Catalogue - v0.5.1 
+JCUDLC - JCU Digital Library Catalogue - v0.5.2
 copyright (c) James Cook University
 */
 @scope (#jcudlc) {
@@ -123,7 +123,6 @@ copyright (c) James Cook University
         background-color: var(--filter-bg);
         color: var(--filter-text);
         padding: 0.5em;
-        border-radius: var(--corner);
         max-width: 30rem;
         margin: 0 auto;
     }
@@ -131,7 +130,6 @@ copyright (c) James Cook University
         flex: 1 1;
         min-height: 10em;
         background-color: var(--data-bg);
-        border-radius: var(--corner);
         color: var(--data-text);
         padding: 0.01px 0.5em;
     }
