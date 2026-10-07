@@ -1,6 +1,6 @@
 {
     "project": "JCUDLC - JCU Digital Library Catalogue",
-    "version": "0.5.1",
+    "version": "0.5.2",
     "copyright": "copyright (c) James Cook University",
 
     "dataUrl": "jcudlc-data.json",

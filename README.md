@@ -1,6 +1,6 @@
 # JCU Digital Library Catalog
 
-**Version 0.5.0** | copyright &copy; James Cook University
+**Version 0.5.2** | copyright &copy; James Cook University
 
 This is a _plain ol' javascript_ tool to filter items in a JSON list. James Cook University uses it to access and search digital collections.
 

@@ -1,7 +1,7 @@
-// JCUDLC - JCU Digital Library Catalogue - v0.5.1
+// JCUDLC - JCU Digital Library Catalogue - v0.5.2
 // copyright (c) James Cook University
 // globals ============================================== 
-const jcudlcVersion = '0.5.1'
+const jcudlcVersion = '0.5.2'
 console.log(`JCUDLC version ${jcudlcVersion}`)
 // ------------------------------------------------------ 
 const defaultTitleFields = ['header', 'title', 'name']
