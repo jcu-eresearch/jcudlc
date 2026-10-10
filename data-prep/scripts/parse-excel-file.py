@@ -16,6 +16,19 @@ from confighelper import label, sheet_config
 # inputs
 SHEET_NAME = sheet_config.sheetname
 
+EMPTY_CELL_MARKERS = sheet_config.empty_cell_markers
+
+
+def normalise_cell(value):
+    """Convert missing values and trimmed placeholder markers to empty text."""
+    if pd.isna(value):
+        return ""
+    if isinstance(value, str):
+        value = value.strip()
+        if value in EMPTY_CELL_MARKERS:
+            return ""
+    return value
+
 
 def validate_mandatory_columns(df, label_config):
     """
@@ -141,13 +154,13 @@ def main():
 
     # (a) Read the entire Excel file (no header yet, to process config rows and data rows together)
     try:
-        df_full = pd.read_excel(files.excel_file, sheet_name=SHEET_NAME, header=None, dtype="str")
+        df_full = pd.read_excel(files.excel_file, sheet_name=SHEET_NAME, header=None, dtype="str", keep_default_na=False)
     except Exception as e:
         print(f"Error reading Excel file: {e}")
         exit(1)
 
-    # Normalise (strip whitespace) from all content
-    df_full = df_full.map(lambda x: x.strip() if isinstance(x, str) else x)
+    # Trim whitespace and normalise missing-value markers to empty text.
+    df_full = df_full.map(normalise_cell)
 
     # (b) Drop unwanted columns based on filter markers
     df_full = drop_unfiltered_columns(df_full, sheet_config.filterRowIdx)

@@ -1,326 +1,201 @@
 # Library data preparation
 
-This directory contains the tools that convert the Digital Library Collection's
-Excel catalogue and document files into the JSON files consumed by the website.
-The normal entry point is `scripts/create-website-datafile.sh`, which runs the
-Python scripts in the required order.
+Run commands from `data-prep/`. The pipeline converts the Excel catalogue and
+source documents into `jcudlc-data.json` and `jcudlc-config.json` for the frontend.
+It does not publish or copy the outputs into a website.
 
-## What the pipeline does
+## Setup and defaults
 
-The pipeline:
-
-1. Reads the configured worksheet from an Excel workbook.
-2. Uses four control rows in the workbook to decide which columns are retained,
-   searchable, displayed, filterable, or contain multiple values.
-3. Writes an intermediate cleaned CSV and four configuration CSV files.
-4. Copies active, open-access documents into the output directory and normalises
-   spaces and `/` characters in their filenames to underscores.
-5. Removes inactive records, changes records with invalid access or missing
-   access files/URLs to `Contact us`, generates URLs and icons, and writes the
-   website's library index and query configuration.
-6. Generates the display configuration used by the website.
-
-The generated website files are:
-
-- `outputs/jcudlc-data.json` — the processed catalogue records.
-- `outputs/query-config.json` — search fields, filter aggregations, and sorting
-  presets.
-- `outputs/library-config.json` — display, filtering, and field behaviour.
-- `outputs/documents/` — copied open-access documents.
-
-Intermediate CSV files are also written to `outputs/` for inspection.
-
-## Requirements
-
-- Bash (the wrapper script is a Bash script).
-- Python 3.11 or newer, with virtual environment support. The pinned NumPy
-  release in `scripts/requirements.txt` requires Python 3.11+.
-- An `.xlsx` workbook with the structure described below.
-- Source documents for open-access records.
-
-The Python requirements file installs the processing libraries, including
-`pandas`, `openpyxl`, `PyYAML`, and `structlog`, plus their pinned
-dependencies. The wrapper uses POSIX virtual-environment paths, so run it on
-macOS or Linux, or in a Linux environment such as WSL rather than native
-Windows Command Prompt or PowerShell.
-
-Run the setup commands from `data-prep`:
+Use Python 3.11 or newer and Bash on macOS, Linux or WSL:
 
 ```bash
 python3 -m venv scripts/.venv
 scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
 ```
 
-The wrapper expects the virtual environment at `scripts/.venv` and invokes its
-Python interpreter directly.
-
-For a first run using the included sample data:
-
-```bash
-cd data-prep
-python3 -m venv scripts/.venv
-scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
-bash scripts/create-website-datafile.sh \
-  --excel-file ../examples/library-index.xlsx \
-  --documents-dir ../examples/documents
-```
-
-## Directory layout
-
-The default layout is:
-
-```text
-data-prep/
-├── inputs/
-│   ├── library-index.xlsx
-│   └── documents/
-│       └── source documents may be in subdirectories
-├── logs/
-├── outputs/
-│   └── documents/
-└── scripts/
-```
-
-The workbook, document source, output, and log paths are configured under
-`runtime` in `scripts/library-config.yml`:
+Defaults in `scripts/library-config.yml` retain the repository's example inputs:
 
 ```yaml
 runtime:
-  excel_file: inputs/library-index.xlsx
-  documents_dir: inputs/documents
+  excel_file: ../examples/library-index.xlsx
+  documents_dir: ../examples/documents
   output_dir: outputs
   log_dir: logs
+  static_config_file: inputs/jcudlc-config-static.json
 ```
 
-Relative paths are resolved from the directory where the pipeline is run. The
-wrapper and individual Python scripts use these same defaults.
+Relative paths are resolved from the current working directory. YAML also
+configures worksheet layout, column names, access/status values, file matching,
+website URLs and icons. Local paths and browser URLs are separate settings.
+Download and contact URLs must include any deployment base path needed by the
+website; the frontend opens catalogue URLs directly.
 
-The script creates `logs/`, `outputs/`, and `outputs/documents/` if necessary.
-Create the source documents directory yourself and place the documents there.
-The document-copying stage currently stops with an error if it finds no source
-files.
+Defaults in `inputs/jcudlc-config-static.yml` relate to the digital library's website page look and behaviour.
 
-## Prepare the workbook
+## Workbook layout
 
-The default workbook is `inputs/library-index.xlsx`. Its layout is controlled by
-`scripts/library-config.yml`; by default the worksheet must be named **`MAIN`**,
-matching the example workbook, and use these rows:
+The default worksheet is `MAIN`. Row numbers refer to the row in the spreadsheet that contains the information:
 
-| Excel row | Purpose | Accepted markers |
-| --- | --- | --- |
-| 2 | Retain the column and optionally make it a filter | `Filter_yes`, `Filter_no` |
-| 3 | Include the column in text search | `Search_yes`, `Search_no` |
-| 4 | Include the column in the published JSON | `FullDisplay_yes`, `FullDisplay_no` |
-| 5 | Treat semicolon-separated cells as multiple values | `MultiOption_yes`, `MultiOption_no` |
-| 6 | Column headings | See the required headings below |
-| 7 onward | Catalogue records | One record per row |
+| Row      | Purpose                        | Markers                             |
+| -------- | ------------------------------ | ----------------------------------- |
+| 2        | Filtering and retained columns | `Filter_yes`, `Filter_no`           |
+| 3        | Search                         | `Search_yes`, `Search_no`           |
+| 4        | Public fields                  | `FullDisplay_yes`, `FullDisplay_no` |
+| 5        | Multiple values                | `MultiOption_yes`, `MultiOption_no` |
+| 6        | Column headings                | Configured column names             |
+| 7 onward | Records                        | One record per row                  |
 
-Use the marker spelling and capitalisation shown above. Leading and trailing
-whitespace is removed, but the later marker-to-Boolean conversion is
-case-sensitive.
+#### Notes
 
-Every column that should enter the pipeline must have either `Filter_yes` or
-`Filter_no` in row 2. A blank or unrecognised value causes that entire column to
-be dropped when at least one valid filter marker exists elsewhere in the row.
-`Filter_no` retains the column; it only prevents the column from becoming a
-website filter. Do not leave the entire filter row blank.
+- **Column headings**: Mandatory source columns are listed in `scripts/library-config.yml` and the default mapping to spreadsheet column names is
+  `ID`, `Title`, `Year`, `Access`,
+  `PDF_file_name`, `Published_URL` and `Portal_Status`. `URL` and `Icon`.
+- **Multi-option values are separated by semicolons**.
+- Rows with blank IDs are removed from the final dataset;
+  only records with status `Active` are published.
+- Non-public columns are removed
+  after access validation and URL generation.
 
-For every retained column, also provide the appropriate `_yes` or `_no` marker
-in rows 3–5. Blank configuration cells are not a supported substitute for the
-`_no` markers and can cause later stages to fail while reading the generated
-configuration CSV files.
+### Placeholder cleanup
 
-The configured required headings are:
+Configure exact, case-sensitive missing-value markers in YAML:
 
-- `ID`
-- `Title`
-- `Year`
-- `Access`
-- `PDF_file_name`
-- `Published_URL`
-- `Portal_Status`
-
-The exact names can be changed under `columns` in `scripts/library-config.yml`.
-The generated `URL` and `Icon` fields must not be added to the workbook.
-
-For fields marked `MultiOption_yes`, separate values with semicolons, for
-example:
-
-```text
-Coastal; Wetlands; Estuarine
+```yaml
+excel:
+  empty_cell_markers: ["NA", "nan", "NaN", "N/A", "n/a", "NULL"]
 ```
 
-### Access and status values
+Strings are trimmed before matching. Matching cells become empty text, as do
+actual missing values. The markers apply across the worksheet.
 
-The default accepted values are case-sensitive during final processing:
+Set `empty_cell_markers: []` to preserve text such as NA, N/A and NULL.
+Otherwise, list the exact text values that should be replaced with blanks.
 
-| Column | Value | Behaviour |
-| --- | --- | --- |
-| `Portal_Status` | `Active` | Include the record. Other values are excluded. |
-| `Access` | `Open` | Copy the named file and generate a download URL. |
-| `Access` | `Access via publisher` | Use `Published_URL` as the record URL. |
-| `Access` | `Contact us` | Use the configured contact/library behaviour. |
+Technical note: Pandas' implicit
+NA-string conversion is disabled so values omitted from this list are preserved.
 
-An `Open` record must name an existing source file in `PDF_file_name`. The
-filename must match a file below the document source directory
-(`inputs/documents/` by default). Files may be organised in subdirectories.
-During copying, spaces and `/` characters in output filenames are replaced with
-`_`, and the CSV is updated to use the normalised name.
+## Generate the catalogue
 
-Source document basenames must be unique across all subdirectories. They must
-also remain unique after filename normalisation (for example, `report one.pdf`
-and `report_one.pdf` would collide in the flat output directory).
-
-An `Access via publisher` record should contain a valid `Published_URL`.
-If an active record has an invalid `Access` value, an `Open` record has no
-matching copied file, or an `Access via publisher` record has no URL, the
-record remains in the JSON with `Access` changed to `Contact us`. The index
-script logs a warning with the record ID and the problem to fix in the next
-spreadsheet update. The workbook and intermediate CSV retain their original
-values.
-
-These values, the generated URL prefixes, icons, and query
-sorting presets can all be changed in `scripts/library-config.yml`.
-
-Some website-interface defaults are currently constants near the top of
-`scripts/create-library-config.py`, rather than YAML settings. Change that file
-if the generated configuration needs a different data URL, hidden-value list,
-quiet-field label, maximum result count, icon tooltip, or support text.
-
-## Run the pipeline
-
-From `data-prep`, run:
+For a first run or when adding documents:
 
 ```bash
-bash scripts/create-website-datafile.sh
+bash scripts/build-jcudlc-files.sh --with-documents
 ```
 
-The repository currently stores the wrapper without its executable bit. If you
-prefer to invoke it directly, first run:
+Or, if the documents are somewhere other than the configured documents_dir:
 
 ```bash
-chmod +x scripts/create-website-datafile.sh
-./scripts/create-website-datafile.sh
+bash scripts/build-jcudlc-files.sh --with-documents --documents-dir <path to primary library document storage>
 ```
 
-The wrapper removes existing `logs/*.log` files and `outputs/*.csv` and
-`outputs/*.json` files before starting. It does not clear
-`outputs/documents/`, so remove obsolete copied documents manually when needed.
-
-When processing finishes, inspect the terminal summary and all files in `logs/`.
-A successful exit only means that every stage completed; records and documents
-can still have been skipped with warnings.
-
-Useful checks include:
+For metadata/configuration updates with documents already in `outputs/documents/`:
 
 ```bash
-grep -iE 'warn|error' logs/*.log
-ls -lh outputs/*.json
+bash scripts/build-jcudlc-files.sh
 ```
 
-After checking the generated JSON and documents, copy or integrate them into the
-website's expected data location as required by the website build. The old copy
-step in the wrapper is currently commented out, so the script does not publish
-the results automatically.
+`scripts/create-website-datafile.sh` invokes the same pipeline. Both accept
+`--excel-file`, `--documents-dir`, `--output-dir`, `--log-dir` and
+`--with-documents`. The wrapper invokes the virtual environment's interpreter
+without activation, creates output/log directories, and stops on stage failure.
 
-## Use non-default paths
+Stages run in order:
 
-The wrapper accepts command-line overrides for the configured workbook,
-document, output, and log paths:
+1. Parse the workbook into `library-index.csv` and four control-row CSV files.
+2. Copy eligible active open-access documents, only with `--with-documents`.
+3. Normalise filenames, validate access, split multi-option values, generate
+   URLs/icons, remove private columns and write `jcudlc-data.json`.
+4. Merge static settings and generated filter/search settings into
+   `jcudlc-config.json`.
+
+Filenames replace spaces and `/` with underscores even when copying is skipped.
+
+### Access value handling
+
+| Default access value   | Behaviour                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| `Open`                 | Prefer a matching output document; otherwise use the value from the `Published_URL` column |
+| `Contact us`           | Use the configured physical-library URL                                                    |
+| `Access via publisher` | Use the value from the `Published_URL` column                                              |
+
+Access values not listed in `library-config.yml`, open records with neither an output document nor a URL,
+and publisher records with blank URLs are changed to `Contact us`, with warnings written to the log file.
+A document present only in the input folder does not satisfy validation; run
+with `--with-documents` to copy it first. The spreadsheet itself is unchanged.
+
+The wrapper clears previous top-level CSV/JSON outputs and logs. Copied documents
+are retained, including obsolete files. Review the info/warning summary and logs
+before using the generated files. Successful exit does not imply zero warnings.
+
+### Build script usage statement
+
+```
+Usage: ./scripts/build-jcudlc-files.sh [--excel-file FILE] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR] [--with-documents]
+  --with-documents  Run get-library-docs.py (skipped by default).
+```
+
+### Sample output from build script
+
+```
+$ bash ./scripts/build-jcudlc-files.sh
+Script started at: 2026-10-09 12:35:58 AEST
+Removing any previous /Users/jc350584/github/jcudlc/data-prep/logs/*.log files
+Removing any previous /Users/jc350584/github/jcudlc/data-prep/outputs *.csv and *.json files
+Using Python virtual environment /Users/jc350584/github/jcudlc/data-prep/scripts/.venv
+Running parse-excel-file.py ...
+Skipping get-library-docs.py (use --with-documents to run it).
+Running create-library-index.py ...
+Running create-library-config.py ...
+SUCCESS | No errors but you should still check the log files for warnings.
+--- Info entries in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-index.log ---
+2026-10-09 12:36:03 [info     ] Loading csv file from /Users/jc350584/github/jcudlc/data-prep/outputs/library-index.csv.
+2026-10-09 12:36:03 [info     ] Initial # rows loaded: 18
+2026-10-09 12:36:03 [info     ] Extracted only the Active records to process
+2026-10-09 12:36:03 [info     ] Number of docs dropped due to Status not set to Active is 3
+2026-10-09 12:36:03 [info     ] Number of Active records kept: 15
+2026-10-09 12:36:03 [info     ] Number of invalid access values changed to Contact us: 0
+2026-10-09 12:36:03 [info     ] Number of Open records without a matching file or URL changed to Contact us: 2
+2026-10-09 12:36:03 [info     ] Number of Access via publisher records without a publisher URL changed to Contact us: 1
+2026-10-09 12:36:03 [info     ] The multi-option fields for libary are: ['Species_Group', 'Habitat', 'Keywords']
+2026-10-09 12:36:03 [info     ] Dropped ['Notes_Internal'] columns
+2026-10-09 12:36:03 [info     ] Creating library_index for website, /Users/jc350584/github/jcudlc/data-prep/outputs/jcudlc-data.json
+2026-10-09 12:36:03 [info     ] Documents in library, final count: 15
+2026-10-09 12:36:03 [info     ] Wrote JSON file to /Users/jc350584/github/jcudlc/data-prep/outputs/jcudlc-data.json
+2026-10-09 12:36:03 [info     ] Library index file creation is complete
+--- Warnings in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-index.log ---
+2026-10-09 12:36:03 [warning  ] ID NQ-016 | PDF_file_name 'northern_bettong_woodland_survey_missing.pdf' has no matching file in /Users/jc350584/github/jcudlc/data-prep/outputs/documents and Published_URL is blank for Open access; changed Access to 'Contact us'. Correct the filename, add the PDF, or provide a URL in the next update.
+2026-10-09 12:36:03 [warning  ] ID NQ-017 | PDF_file_name is blank and Published_URL is blank for Open access; changed Access to 'Contact us'. Correct the filename, add the PDF, or provide a URL in the next update.
+2026-10-09 12:36:03 [warning  ] ID NQ-018 | Published_URL is blank for Access via publisher record; changed Access to 'Contact us'. Add the publisher URL in the next spreadsheet update.
+--- Warnings in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-config.log ---
+(no warnings found)
+If all good then you are ready to build the website.
+Script finished at: 2026-10-09 12:36:03 AEST with exit code 0
+```
+
+## Frontend settings
+
+Edit the tracked `inputs/jcudlc-config-static.json` for colours, titles, fonts,
+aliases, support text and other frontend preferences. It contains configurable settings from the
+`frontend` section of this repo and forms part of the final `jcudlc-config.json` file generated
+by these scripts for use with the digital libary javascript.
+
+Generated `noFilter` and `hideFromSearch` override those keys in static settings.
+`quietFields` combines explicitly configured quiet fields with generated URL/icon
+fields. Aliases are included alongside original field names in these lists.
+`FullDisplay_yes` or `FullDisplay_no` workbook flags control whether fields are published to the document details view; they do not
+control which public fields appear under “Additional details”; that is what the `quietFields` does.
+
+## Review and use outputs
+
+Copy reviewed `outputs/jcudlc-data.json` and `outputs/jcudlc-config.json` into the appropriate folder in your
+site's folder structure, this may be the same folder as the your library catalogue HTML but it will depend on
+what framework you are using to build your website.
+Copy `outputs/documents/` to the location matching `website.urls.download_prefix`.
+Check download/contact links and filtering/search
+in a website preview before publishing. Review obsolete documents separately.
+
+## Tests
 
 ```bash
-bash scripts/create-website-datafile.sh \
-  --excel-file /path/to/spreadsheets/catalogue.xlsx \
-  --documents-dir /path/to/source-documents \
-  --output-dir /path/to/output \
-  --log-dir /path/to/logs
+scripts/.venv/bin/python -B -m unittest discover -s tests -v
 ```
-
-`--excel-file` directly identifies the workbook; there is no separate input
-directory setting. Relative override paths are resolved from the directory in
-which the command is run. Copied documents are written to a `documents/`
-directory below the selected output directory.
-
-For example, run the repository's sample workbook and documents from
-`data-prep` with:
-
-```bash
-bash scripts/create-website-datafile.sh \
-  --excel-file ../examples/library-index.xlsx \
-  --documents-dir ../examples/documents
-```
-
-Run `bash scripts/create-website-datafile.sh --help` to see the available
-options.
-
-## What else is needed?
-
-Nothing else is required to generate the files locally once Python, the Python
-packages, a correctly structured workbook, and the source documents are in
-place. For a complete website publishing workflow, account for these additional
-operational steps:
-
-- The pipeline does not copy its results into the Jekyll site or publish them.
-  Add a deliberate copy/build/deploy step after reviewing the outputs.
-- The pipeline clears old top-level CSV and JSON outputs, but not
-  `outputs/documents/`. Remove documents that are no longer in the catalogue so
-  stale files are not deployed.
-- `inputs/`, `outputs/`, and `logs/` are intentionally ignored by Git apart from
-  their `.gitkeep` files. Store the authoritative workbook and documents in an
-  appropriate managed location and back them up separately.
-- Treat warnings as data-quality failures to investigate: a zero exit code does
-  not guarantee that every spreadsheet record or document was included.
-
-## Script reference
-
-| Script | Role |
-| --- | --- |
-| `create-website-datafile.sh` | Validates paths, clears prior CSV/JSON/log outputs, uses the project virtual environment, and runs the pipeline. |
-| `parse-excel-file.py` | Reads Excel, applies control rows, drops records without an ID, validates required columns, and writes the intermediate CSV/configuration CSV files. |
-| `get-library-docs.py` | Finds source documents recursively, copies active open-access files, normalises filenames, and updates the intermediate CSV. |
-| `create-library-index.py` | Removes inactive records, changes invalid or incomplete access details to `Contact us` with warnings, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes `jcudlc-data.json` and `query-config.json`. |
-| `create-library-config.py` | Converts the control-row CSV files into `library-config.json`. |
-| `confighelper.py` | Loads and validates `library-config.yml` and resolves runtime paths. |
-| `libhelper.py` | Provides shared filename normalisation. |
-
-Although the Python scripts can be run individually, later stages depend on
-files produced by earlier stages. Use the wrapper for routine runs.
-
-## Troubleshooting
-
-### The spreadsheet cannot be read
-
-Confirm that the workbook path is correct, the configured worksheet exists, and
-the workbook is a valid `.xlsx` file. The default worksheet name is `MAIN`.
-
-### A configured column is reported missing
-
-Confirm that its row 6 heading exactly matches `scripts/library-config.yml` and
-that its row 2 cell contains `Filter_yes` or `Filter_no`. An unmarked column is
-dropped before required-column validation.
-
-### An open-access record appears as `Contact us`
-
-Check `logs/get-library-docs.log` and `logs/create-library-index.log`. Confirm
-that the record is `Active`, its access value is `Open`, and its
-`PDF_file_name` exactly matches a source filename below the selected document
-source directory (`inputs/documents/` by default).
-
-### A record is unexpectedly omitted
-
-Check that `Portal_Status` is `Active` and the record has an ID. Active records
-with invalid access or missing access-specific information remain in the JSON
-as `Contact us`; check `logs/create-library-index.log` for the warning.
-
-### A column is missing from the final JSON
-
-It must be retained with a valid row 2 filter marker and set to
-`FullDisplay_yes` in row 4. `FullDisplay_no` removes the field from the published
-index.
-
-### A filter or multi-value field behaves incorrectly
-
-Check the exact control-row marker spelling. For multi-value fields, use `;` as
-the separator. Empty or whitespace-only spreadsheet cells remain empty in the
-CSV and JSON. Empty multi-value cells become empty arrays in the JSON.
-Literal text such as `n/a` remains text and is not treated as an empty cell.

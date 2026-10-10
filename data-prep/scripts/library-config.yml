@@ -6,9 +6,12 @@ runtime:
   documents_dir: ../examples/documents
   output_dir: outputs
   log_dir: logs
+  static_config_file: inputs/jcudlc-config-static.json
 
 excel:
   sheet: MAIN
+  # Exact, case-sensitive markers; use [] to preserve all literal values.
+  empty_cell_markers: ["NA", "nan", "NaN", "N/A", "n/a", "NULL"]
   # These are spreadsheet row numbers, starting at 1, as shown in Excel.
   rows:
     filter: 2
@@ -54,12 +57,3 @@ website:
     download: file_download
     support: contact_support
     library: schedule
-
-query:
-  sortings:
-    name_asc:
-      fields: [Title]
-      order: [asc]
-    year_name_asc:
-      fields: [Year, Title]
-      order: [desc, asc]

@@ -11,12 +11,12 @@
     (used for logging).
 """
 import pandas as pd
-import json
 import logging
 import structlog
 import argparse
 from dataclasses import asdict
 import confighelper as cfg
+import libhelper
 from confighelper import (
     docs,
     label,
@@ -25,7 +25,6 @@ from confighelper import (
     icons,
     urls,
     files,
-    query,
 )
 
 is_dry_run = False
@@ -65,9 +64,13 @@ def set_url_and_icon(log, lib_data):
         lib_data[label.access] == access_types.physical_library, label.displayIcon
     ] = icons.library
 
-    # set label.url value for open access documents (can download directly from the library)
-    lib_data.loc[lib_data[label.access] == access_types.open, label.displayURL] = (
-        urls.download + lib_data[label.filename]
+    # Prefer copied documents; otherwise preserve the spreadsheet's URL.
+    doc_list = {path.name for path in docs.dest_path.iterdir() if path.is_file()}
+    open_access = lib_data[label.access] == access_types.open
+    local_download = open_access & lib_data[label.filename].isin(doc_list)
+    lib_data.loc[open_access, label.displayURL] = lib_data.loc[open_access, label.publishedURL]
+    lib_data.loc[local_download, label.displayURL] = (
+        urls.download + lib_data.loc[local_download, label.filename]
     )
     lib_data.loc[
         lib_data[label.access] == access_types.open, label.displayIcon
@@ -105,20 +108,6 @@ def get_multioption_fields(log):
     fields = data.columns[data.iloc[0]].to_list()
     log.info("The multi-option fields for libary are: {}".format(fields))
     return fields
-
-def get_searchable_fields(log):
-    data = pd.read_csv(files.search_config)
-    search_fields = data.columns[data.iloc[0]].to_list()
-    log.info("The searchable fields for libary are: {}".format(search_fields))
-    return search_fields
-
-
-def get_filter_list(log):
-    data = pd.read_csv(files.filter_config)
-    filter_items = data.columns[data.iloc[0]].to_list()
-    log.info("The filter fields for library are: {}".format(filter_items))
-    return filter_items
-
 
 def remove_private_details(log, lib_data):
     # Read in the appropriate config file and drop any columns
@@ -160,7 +149,7 @@ def replace_invalid_access_values(log, lib_data):
 
 
 def replace_openaccess_without_file(log, lib_data):
-    # Change open-access rows without a copied file to physical-library access.
+    # Request library access only when neither a copied file nor a URL exists.
 
     # Get the list of files for the library.
     doc_list = {path.name for path in docs.dest_path.iterdir() if path.is_file()}
@@ -172,6 +161,7 @@ def replace_openaccess_without_file(log, lib_data):
     problem_docs = lib_data[
         (lib_data[label.access] == access_types.open)
         & (~lib_data[label.filename].isin(doc_list))
+        & (lib_data[label.publishedURL].fillna("").str.strip() == "")
     ]
     for _, doc in problem_docs.iterrows():
         filename = doc[label.filename]
@@ -183,15 +173,15 @@ def replace_openaccess_without_file(log, lib_data):
             )
         )
         log.warning(
-            "ID {} | {} for {} access; changed {} to {!r}. Correct the filename or add the PDF in the next update.".format(
-                doc[label.id], problem, access_types.open, label.access,
+            "ID {} | {} and {} is blank for {} access; changed {} to {!r}. Correct the filename, add the PDF, or provide a URL in the next update.".format(
+                doc[label.id], problem, label.publishedURL, access_types.open, label.access,
                 access_types.physical_library
             )
         )
 
     lib_data.loc[problem_docs.index, label.access] = access_types.physical_library
     log.info(
-        "Number of {} records without a matching file changed to {}: {}".format(
+        "Number of {} records without a matching file or URL changed to {}: {}".format(
             access_types.open, access_types.physical_library, problem_docs.index.size
         )
     )
@@ -236,76 +226,13 @@ def remove_nonactive_rows(log, lib_data):
             status_types.active, initial_num_docs - lib_data.index.size
         )
     )
-
-    return lib_data
-
-
-def create_query_config(log, lib_data, search_fields, filter_fields, multi_option_fields):
-    # TODO Sorting config is still hard-coded, need to fix this at some point
-    log.debug("about to start create_query_config function")
-    log.info("Search fields {}".format(search_fields))
-    log.info("Filter fields {}".format(filter_fields))
-    log.info("Multi-option fields {}".format(multi_option_fields))
-
-    # build aggregations structure as a Dictionary
-    filters = {}
-    for field in filter_fields:
-        if field not in lib_data.columns:
-            continue  # skip on to the next filter field
-
-        log.debug(
-            "create_query_config: field {}. Is this a multi-option field? {}".format(
-                field, field in multi_option_fields
-            )
+    log.info(
+        "Number of {} records kept: {}".format(
+            status_types.active, lib_data.index.size
         )
-        if field in multi_option_fields:
-            unique_filters = set(x for sublist in lib_data[field] for x in sublist if x != "")
-        else:
-            unique_filters = [x for x in lib_data[field].unique().tolist() if x != ""]
-
-        log.debug(
-            "create_query_string: field {},  unique_filters: {}".format(
-                field, unique_filters
-            )
-        )
-        filters[field] = {"title": field, "size": len(unique_filters)}
-        # log.debug(
-        #     "create_query_string: filters[{}]: {}".format(field, filters[field])
-        # )
-
-    # Use configured query sortings if present; otherwise fall back to defaults
-    configured_sortings = query if isinstance(query, dict) and query else None
-
-    if configured_sortings:
-        sortings = {}
-        for name, spec in configured_sortings.items():
-            # Map configured field names to actual values (allowing label names)
-            fields = [
-                getattr(label, f.lower(), f) if hasattr(label, f.lower()) else f
-                for f in spec.get("field", [])
-            ]
-            orders = spec.get("order", [])
-            sortings[name] = {"field": fields, "order": orders}
-    else:
-        sortings = {
-            "name_asc": {"field": getattr(label, "title", "Title"), "order": "asc"},
-            "year_name_asc": {
-                "field": [getattr(label, "year", "Year"), getattr(label, "title", "Title")],
-                "order": ["desc", "asc"],
-            },
-        }
-
-    query_config = {"sortings": sortings, "searchableFields": search_fields, "aggregations": filters}
-
-    log.debug("create_query_config: query_config({})".format(query_config))
-
-    # Create/overwrite query_config json file
-    # See confighelper.py for file names
-    config_file = files.query_config.write_text(
-        json.dumps(query_config), encoding="utf-8"
     )
 
-    log.info("Query config written to {}".format(files.query_config))
+    return lib_data
 
 
 if __name__ == "__main__":
@@ -345,6 +272,12 @@ if __name__ == "__main__":
     ).map(str.strip)
     log.info("Initial # rows loaded: {}".format(lib_data.index.size))
 
+    # Match the filenames used for copied documents, including when the copy
+    # stage was skipped and documents were already present in the output folder.
+    lib_data[label.filename] = lib_data[label.filename].map(libhelper.get_normalised_filename)
+    if not is_dry_run:
+        lib_data.to_csv(files.libindex_csv, index=False, encoding="utf-8")
+
     lib_data = remove_nonactive_rows(log, lib_data)
     lib_data = replace_invalid_access_values(log, lib_data)
     lib_data = replace_openaccess_without_file(log, lib_data)
@@ -354,8 +287,6 @@ if __name__ == "__main__":
     # Remove non-public columns after validation and URL/icon generation.
     lib_data = remove_private_details(log, lib_data)
 
-    lib_data = create_library_index(log, is_dry_run, lib_data)
-    if not is_dry_run:
-        create_query_config(log, lib_data, get_searchable_fields(log), get_filter_list(log), get_multioption_fields(log))
+    create_library_index(log, is_dry_run, lib_data)
 
-    log.info("library index and query config file creation is complete")
+    log.info("Library index file creation is complete")

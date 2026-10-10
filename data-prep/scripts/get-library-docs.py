@@ -23,7 +23,6 @@ import confighelper as cfg
 from confighelper import label, status_types, access_types
 import libhelper
 import unicodedata
-import pandas as pd
 
 
 UNICODE_FORM = "NFKD"
@@ -179,14 +178,6 @@ if __name__ == "__main__":
                         )
                     )
                     num_files_in_dest += 1
-
-    if not is_dry_run:
-        # Normalise all the filenames in the labels.filename column of the library index
-        lib_data = pd.read_csv(
-            files.libindex_csv, dtype="str", skipinitialspace=True, keep_default_na=False
-        ).map(str.strip)
-        lib_data[label.filename] = lib_data[label.filename].map(libhelper.get_normalised_filename)
-        lib_data.to_csv(files.libindex_csv, index=False, encoding="utf-8")
 
     log.info(
         "Files copied {} | Files with empty filename {} | File already in dest {} | Missing files {}".format(

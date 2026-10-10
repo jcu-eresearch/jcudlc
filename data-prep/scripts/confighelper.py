@@ -23,6 +23,7 @@ class SheetValues:
     fullDisplayRowIdx: int
     multiOptionRowIdx: int
     colHeaderRowIdx: int
+    empty_cell_markers: frozenset[str]
 
 
 @dataclass(frozen=True)
@@ -79,16 +80,17 @@ class RuntimeDefaults:
     documents_dir: str
     output_dir: str
     log_dir: str
+    static_config_file: str
 
 
 @dataclass(frozen=True)
 class LocalPaths:
     output_dir: Path
     log_dir: Path
+    static_config_file: Path
     doc_display_config: Path
     search_config: Path
     filter_config: Path
-    query_config: Path
     multi_option_config: Path
     excel_file: Path
     libindex_csv: Path
@@ -173,7 +175,12 @@ def get_sheet_config(config):
             raise ValueError(f"excel.rows.{row_path} must be a spreadsheet row number >= 1")
         return row_number - 1
 
+    markers = _require(config, "excel.empty_cell_markers")
+    if not isinstance(markers, list) or any(not isinstance(value, str) for value in markers):
+        raise ValueError("excel.empty_cell_markers must be a list of strings")
+
     return SheetValues(
+        empty_cell_markers=frozenset(value.strip() for value in markers),
         sheetname=_require(config, "excel.sheet"),
         filterRowIdx=spreadsheet_row_to_index("filter"),
         searchRowIdx=spreadsheet_row_to_index("search"),
@@ -250,6 +257,7 @@ def get_runtime_defaults(config):
         "documents_dir": _require(config, "runtime.documents_dir"),
         "output_dir": _require(config, "runtime.output_dir"),
         "log_dir": _require(config, "runtime.log_dir"),
+        "static_config_file": _require(config, "runtime.static_config_file"),
     }
     for name, value in values.items():
         if not isinstance(value, str) or not value.strip():
@@ -257,36 +265,6 @@ def get_runtime_defaults(config):
         if "\n" in value or "\t" in value:
             raise ValueError(f"runtime.{name} must not contain tabs or newlines")
     return RuntimeDefaults(**values)
-
-
-def get_query_config(config):
-    query_sortings = {}
-    sortings = _optional(config, "query.sortings", {})
-    if sortings is None:
-        return query_sortings
-    if not isinstance(sortings, dict):
-        raise ValueError("query.sortings must be a mapping of sort preset names")
-
-    for name, spec in sortings.items():
-        if not isinstance(spec, dict):
-            raise ValueError(f"query.sortings.{name} must be a mapping")
-
-        fields = spec.get("fields", spec.get("field", []))
-        order = spec.get("order", [])
-        if isinstance(fields, str):
-            fields = [fields]
-        if isinstance(order, str):
-            order = [order]
-        if not fields:
-            raise ValueError(f"query.sortings.{name}.fields must contain at least one field")
-        if order and len(order) != len(fields):
-            raise ValueError(
-                f"query.sortings.{name}.order must have the same number of values as fields"
-            )
-
-        query_sortings[name] = {"field": fields, "order": order}
-
-    return query_sortings
 
 
 def get_internal_files(
@@ -308,15 +286,15 @@ def get_internal_files(
     return LocalPaths(
         output_dir=output_dir,
         log_dir=log_dir,
+        static_config_file=_resolve_runtime_path(defaults.static_config_file),
         doc_display_config=output_dir / "doc-display-config.csv",
         search_config=output_dir / "search-config.csv",
         filter_config=output_dir / "filter-config.csv",
-        query_config=output_dir / "query-config.json",
         multi_option_config=output_dir / "multi-option-config.csv",
         excel_file=excel_file,
         libindex_csv=output_dir / "library-index.csv",
         libindex_json=output_dir / "jcudlc-data.json",
-        library_config_json=output_dir / "library-config.json",
+        library_config_json=output_dir / "jcudlc-config.json",
     )
 
 
@@ -343,7 +321,6 @@ status_types = get_status_values(config)
 icons = get_icons(config)
 urls = get_urls(config)
 files = get_internal_files(config)
-query = get_query_config(config)
 
 
 if __name__ == "__main__":
