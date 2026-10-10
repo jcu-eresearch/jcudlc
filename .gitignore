@@ -8,7 +8,8 @@ __pycache__/
 
 .vscode/
 
-data-prep/inputs/
+data-prep/inputs/*
+!data-prep/inputs/jcudlc-config-static.json
 !data-prep/inputs/.gitkeep
 
 data-prep/outputs/
