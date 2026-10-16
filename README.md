@@ -1,6 +1,6 @@
 # JCU Digital Library Catalog
 
-**Version 0.5.0** | copyright &copy; James Cook University
+**Version 0.5.2** | copyright &copy; James Cook University
 
 This is a _plain ol' javascript_ tool to filter items in a JSON list. James Cook University uses it to access and search digital collections.
 
@@ -107,16 +107,14 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 - [ ] for each filter item, show result count for that additional filter
 - [ ] mobile layout
-- [ ] config: support font specification (default to inheriting it)
 - [ ] version numbering
     - [x] write to console
     - [ ] check against config version, etc
 - [ ] thorough documentation
-- [ ] divider string (and format?) for displaying multi-value lists
-- [ ] config: support aliases `aliases: { "field_A": "Human Name A", ... }`
 
 #### Lower Priority
 
+- [ ] support no-config-just-defaults
 - [ ] look up licencing for local hosting of the Material Symbols font
 - [ ] _admin or some similar url thing to switch on "dev" mode
 - [ ] URL looking fields (URL, Link, website, email) that renders a clicky-link
@@ -129,6 +127,11 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Complete
 
+- [x] fonts
+    - [x] inherit from page
+    - [x] support font specification in config
+- [x] config: support aliases `aliases: { "field_A": "Human Name A", ... }`
+- [x] divider string and format for displaying multi-value lists
 - [x] defaults for when no fields are nominated as headers
 - [x] packaging: JS lib that you point at the div that should become the filterable list of items
     - [x] split into files

@@ -1,7 +1,7 @@
-// JCUDLC - JCU Digital Library Catalogue - v0.5.1
+// JCUDLC - JCU Digital Library Catalogue - v0.5.2
 // copyright (c) James Cook University
 // globals ============================================== 
-const jcudlcVersion = '0.5.1'
+const jcudlcVersion = '0.5.2'
 console.log(`JCUDLC version ${jcudlcVersion}`)
 // ------------------------------------------------------ 
 const defaultTitleFields = ['header', 'title', 'name']
@@ -9,6 +9,7 @@ const defaultTitleFormat = 'bold unlabelled'
 const defaultSubtitleFields = ['author', 'authors', 'editors']
 const defaultSubtitleFormat = 'italic'
 const defaultMaxResultCount = 100
+const defaultFontFamily = 'inherit'
 let config = {}
 let allFields = []
 let allItems = []
@@ -158,7 +159,8 @@ function removeFilter(value, field) {
 // 
 function applyConfig() {
     const styles = new CSSStyleSheet()
-    // if there are colours speficied in the config, write them into the page
+    // if there are colours and other css-level values 
+    // speficied in the config, write them into the page
     ;[
         ['filterText', '--jcudlc-filter-text'],
         ['filterColumnBackground', '--jcudlc-filter-bg'],
@@ -179,6 +181,8 @@ function applyConfig() {
         ['alertInfoBackground', '--jcudlc-message-good-bg'],
         ['alertErrorText', '--jcudlc-message-bad-text'],
         ['alertErrorBackground', '--jcudlc-message-bad-bg'],
+
+        ['font', '--jcudlc-font-family'],
     ].forEach( ([configKey, cssVarName]) => {
         if (config[configKey]) {
             applyCssVar(styles, cssVarName, config[configKey])
