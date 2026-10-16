@@ -1,9 +1,9 @@
 {
+  "project": "JCUDLC - JCU Digital Library Catalogue",
+  "version": "0.5.1",
+  "copyright": "copyright (c) James Cook University",
   "dataUrl": "jcudlc-data.json",
-  "hideValues": [
-    "",
-    "n/a"
-  ],
+  "hideValues": [""],
   "noFilter": [
     "ID",
     "Title",
@@ -13,24 +13,21 @@
     "Portal_Status",
     "Summary",
     "Traditional_or_Local_Name",
-    "Project",
     "Notes_Internal",
     "URL",
     "Icon"
   ],
-  "quietFields": [
-    "Notes_Internal",
-    "URL",
-    "Icon"
-  ],
+  "titleFields": ["Title"],
+  "titleFormat": "bold unlabelled",
+  "subtitleFields": ["Authors"],
+  "subtitleFormat": "italic",
+  "quietFields": ["PDF_file_name", "Notes_Internal", "URL", "Icon"],
   "quietLabel": "Additional details >",
   "quietLabelFormat": "faded italic center smaller",
   "maxResultCount": 200,
   "iconTooltip": "Access",
   "hideFromSearch": [
     "ID",
-    "Year",
-    "Authors",
     "Species_Group",
     "Region",
     "Habitat",
@@ -38,44 +35,11 @@
     "PDF_file_name",
     "Published_URL",
     "Portal_Status",
-    "Traditional_or_Local_Name",
     "Conservation_Status",
     "Project",
     "Notes_Internal",
     "URL",
     "Icon"
   ],
-  "supportText": "contact eResearch@jcu.edu.au if problems persist",
-  "fields": {
-    "Title": {
-      "display": "unlabeled header",
-      "format": "bold"
-    },
-    "Year": {
-      "filter": "category"
-    },
-    "Authors": {
-      "filter": "category"
-    },
-    "Species_Group": {
-      "filter": "category",
-      "multiOption": true
-    },
-    "Region": {
-      "filter": "category"
-    },
-    "Habitat": {
-      "filter": "category",
-      "multiOption": true
-    },
-    "Access": {
-      "filter": "category"
-    },
-    "Conservation_Status": {
-      "filter": "category"
-    },
-    "Keywords": {
-      "multiOption": true
-    }
-  }
+  "supportText": "contact help-me@example.com if problems persist"
 }

@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# Before running this script, copy the spreadsheet into the spreadsheet input
-# folder, rename it to library-index.xlsx, and place source documents in the
-# documents input folder.
+# Before running this script, place the spreadsheet at the runtime path
+# configured in library-config.yml, or provide a command-line override.
+# Source documents are needed when --with-documents is used.
 #
 # After running this script, check the *.log files that it has created in
 # the logs folder. Search for "warn" as well as "error".
 #
 # After the python scripts have all run successfully there will be a
-# jcudlc-data.json file in ../src/components. Now the website can
+# jcudlc-data.json and jcudlc-config.json files in the output directory. Now the website can
 # be built.
 #
 # This script assumes that a virtual environment named .venv has been
@@ -24,7 +24,6 @@ SUCCESS=0
 SCRIPTS_DIR=$(cd "$(dirname "$0")" && pwd)
 VENV=$SCRIPTS_DIR/.venv
 PYTHON_BIN=$VENV/bin/python
-WEBSITE_SRC_PATH=../src/components
 
 if [ ! -x "$PYTHON_BIN" ]; then
   echo "Python virtual environment not found at $VENV."
@@ -36,9 +35,11 @@ RUNTIME_CONFIG=$("$PYTHON_BIN" "$SCRIPTS_DIR/confighelper.py" --print-runtime-de
   exit $FAILURE
 }
 IFS=$'\t' read -r EXCEL_FILE DOCUMENTS_DIR OUTPUT_DIR LOG_DIR <<< "$RUNTIME_CONFIG"
+RUN_LIBRARY_DOCS=false
 
 usage() {
-  echo "Usage: $0 [--excel-file FILE] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR]"
+  echo "Usage: $0 [--excel-file FILE] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR] [--with-documents]"
+  echo "  --with-documents  Run get-library-docs.py (skipped by default)."
 }
 
 require_value() {
@@ -70,6 +71,10 @@ while [ $# -gt 0 ]; do
       require_value "$1" "$2"
       EXCEL_FILE="$2"
       shift 2
+      ;;
+    --with-documents)
+      RUN_LIBRARY_DOCS=true
+      shift
       ;;
     --help|-h)
       usage
@@ -135,14 +140,18 @@ echo "Running $PYTHON_SCRIPT_NAME.py ..."
   exit $FAILURE
 }
 
-PYTHON_SCRIPT_NAME=get-library-docs
-echo "Running $PYTHON_SCRIPT_NAME.py (this may take quite a while)..."
-"$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
-  echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
-  grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
-  echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."
-  exit $FAILURE
-}
+if [ "$RUN_LIBRARY_DOCS" = true ]; then
+  PYTHON_SCRIPT_NAME=get-library-docs
+  echo "Running $PYTHON_SCRIPT_NAME.py (this may take quite a while)..."
+  "$PYTHON_BIN" "$SCRIPTS_DIR/$PYTHON_SCRIPT_NAME.py" "${PYTHON_PATH_ARGS[@]}" > "$LOG_DIR/$PYTHON_SCRIPT_NAME.log" || {
+    echo "ERROR | $PYTHON_SCRIPT_NAME.py failed to run successfully."
+    grep "error" "$LOG_DIR/$PYTHON_SCRIPT_NAME.log"
+    echo "View $LOG_DIR/$PYTHON_SCRIPT_NAME.log for more information."
+    exit $FAILURE
+  }
+else
+  echo "Skipping get-library-docs.py (use --with-documents to run it)."
+fi
 
 PYTHON_SCRIPT_NAME=create-library-index
 echo "Running $PYTHON_SCRIPT_NAME.py ..."
@@ -164,16 +173,19 @@ echo "Running $PYTHON_SCRIPT_NAME.py ..."
 
 echo "SUCCESS | No errors but you should still check the log files for warnings."
 
-# # copy json files into website src area
-# echo "cp *.json files to $WEBSITE_SRC_PATH"
-# cp $OUTPUT_DIR/*.json $WEBSITE_SRC_PATH || {
-#   echo "ERROR: Failed to copy files."
-#   exit $FAILURE
-# }
+# Show structured info entries before the warning summary.
+if [ "$RUN_LIBRARY_DOCS" = true ]; then
+  echo "--- Info entries in $LOG_DIR/get-library-docs.log ---"
+  grep -i '\[info[[:space:]]*\]' "$LOG_DIR/get-library-docs.log" || echo "(no info entries found)"
+fi
+echo "--- Info entries in $LOG_DIR/create-library-index.log ---"
+grep -i '\[info[[:space:]]*\]' "$LOG_DIR/create-library-index.log" || echo "(no info entries found)"
 
-# Show warnings from the last two script runs to make them easy to spot
-echo "--- Warnings in $LOG_DIR/get-library-docs.log ---"
-grep -i "warning\|warn" "$LOG_DIR/get-library-docs.log" || echo "(no warnings found)"
+# Show warnings from the script runs to make them easy to spot
+if [ "$RUN_LIBRARY_DOCS" = true ]; then
+  echo "--- Warnings in $LOG_DIR/get-library-docs.log ---"
+  grep -i "warning\|warn" "$LOG_DIR/get-library-docs.log" || echo "(no warnings found)"
+fi
 echo "--- Warnings in $LOG_DIR/create-library-index.log ---"
 grep -i "warning\|warn" "$LOG_DIR/create-library-index.log" || echo "(no warnings found)"
 echo "--- Warnings in $LOG_DIR/create-library-config.log ---"
