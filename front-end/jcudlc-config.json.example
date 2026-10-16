@@ -1,6 +1,6 @@
 {
     "project": "JCUDLC - JCU Digital Library Catalogue",
-    "version": "0.5.1",
+    "version": "0.5.2",
     "copyright": "copyright (c) James Cook University",
 
     "dataUrl": "jcudlc-data.json",
@@ -20,7 +20,12 @@
     "supportText": "contact eResearch@jcu.edu.au if problems persist",
 
     "aliases": { "PDF_file_name": "PDF" },
-    
+
+    "font": "Georgia",
+
+    "separator": " ● ",
+    "separatorFormat": "faded",  
+
     "filterText": "#ddd",
     "filterColumnBackground": "#111",
     "filterItemBackground": "#222",
