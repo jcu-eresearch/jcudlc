@@ -11,6 +11,7 @@ const defaultSubtitleFormat = 'italic'
 const defaultSeparator = ' ⧸ ' // ⧸ is a U+29F8, Big Solidus
 const defaultSeparatorFormat = 'faded'
 const defaultMaxResultCount = 100
+const defaultFontFamily = 'inherit'
 let config = {}
 let allFields = []
 let allItems = []
@@ -96,7 +97,8 @@ function findUsefulField(item, fieldId) {
 function makeField(fieldId, fieldValue, format) {
 
     // if the value is a hideValue, then return nothing
-    if (config.hideValues.includes(fieldValue)) return ''
+    if (config.hideValues.includes(fieldValue) ||
+        (Array.isArray(fieldValue) && fieldValue.length === 0)) return ''
 
     // check config for separator choices
     let separatorString = config.separator || defaultSeparator
@@ -181,7 +183,8 @@ function removeFilter(value, field) {
 // 
 function applyConfig() {
     const styles = new CSSStyleSheet()
-    // if there are colours speficied in the config, write them into the page
+    // if there are colours and other css-level values 
+    // speficied in the config, write them into the page
     ;[
         ['filterText', '--jcudlc-filter-text'],
         ['filterColumnBackground', '--jcudlc-filter-bg'],
@@ -202,6 +205,8 @@ function applyConfig() {
         ['alertInfoBackground', '--jcudlc-message-good-bg'],
         ['alertErrorText', '--jcudlc-message-bad-text'],
         ['alertErrorBackground', '--jcudlc-message-bad-bg'],
+
+        ['font', '--jcudlc-font-family'],
     ].forEach( ([configKey, cssVarName]) => {
         if (config[configKey]) {
             applyCssVar(styles, cssVarName, config[configKey])
@@ -338,6 +343,7 @@ function buildFilter(fieldId) {
             fieldValue = [fieldValue]
         }
         fieldValue.forEach( val => {
+            if (config.hideValues.includes(val)) return
             if (!domain.includes(val)) {
                 domain.push(val)
             }

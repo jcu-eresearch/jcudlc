@@ -26,11 +26,14 @@ copyright (c) James Cook University
         --interface-bg: var(--jcudlc-interface-bg, var(--data-active));
         --interface-text: var(--jcudlc-interface-text, var(--data-text));
 
-        --corner: var(--jcudlc-corner, 0.5rem); 
+        --corner: var(--jcudlc-corner, 0.5rem);
+
+        --font-family: var(--jcudlc-font-family, inherit);
 
         container-name: jcudlc;
         container-type: inline-size;
 
+        font-family: var(--font-family);
         box-sizing: border-box;
         interpolate-size: allow-keywords;
     }
