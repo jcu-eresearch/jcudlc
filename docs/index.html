@@ -1,0 +1,126 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCU Digital Library Catalogue</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/default.min.css">
+    <style>.hljs { background:none }</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js"></script>
+</head>
+<body>
+<h1>JCU Digital Library Catalogue</h1>
+<p>The JCU Digital Library Catalogue is a nice way to let people look through your collection of items searchable, filterable list.</p>
+<p>The Catalogue interface offers a sidebar of filterable dimensions, and a item list displaying the items that match your currently selected filters and searches.</p>
+<p>The JCUDLC comes in two parts with separate documentation:</p>
+<center>
+
+<p><strong><a href="./backend.html">back end data preparation</a></strong></p>
+<p><strong><a href="./frontend.html">front end</a></strong></p>
+</center>
+
+<hr>
+<h1>Tasks</h1>
+<blockquote>
+<p>TODO remove this whole section</p>
+</blockquote>
+<ul>
+<li><input disabled="" type="checkbox"> for each filter item, show result count for that additional filter</li>
+<li><input disabled="" type="checkbox"> mobile layout</li>
+<li><input disabled="" type="checkbox"> fonts<ul>
+<li><input checked="" disabled="" type="checkbox"> inherit from page</li>
+<li><input disabled="" type="checkbox"> support font specification in config</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> version numbering<ul>
+<li><input checked="" disabled="" type="checkbox"> write to console</li>
+<li><input disabled="" type="checkbox"> check against config version, etc</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> thorough documentation</li>
+<li><input disabled="" type="checkbox"> divider string (and format?) for displaying multi-value lists</li>
+<li><input disabled="" type="checkbox"> config: support aliases <code>aliases: { &quot;field_A&quot;: &quot;Human Name A&quot;, ... }</code></li>
+</ul>
+<h4>Lower Priority</h4>
+<ul>
+<li><input disabled="" type="checkbox"> support no-config-just-defaults</li>
+<li><input disabled="" type="checkbox"> look up licencing for local hosting of the Material Symbols font</li>
+<li><input disabled="" type="checkbox"> _admin or some similar url thing to switch on &quot;dev&quot; mode</li>
+<li><input disabled="" type="checkbox"> URL looking fields (URL, Link, website, email) that renders a clicky-link</li>
+<li><input disabled="" type="checkbox"> range for numeric field</li>
+<li><input disabled="" type="checkbox"> sorting options</li>
+<li><input disabled="" type="checkbox"> open all / close all for the result discosure/show details</li>
+<li><input disabled="" type="checkbox"> optional icon feature; on hover, or something, offer a button to copy the link</li>
+<li><input disabled="" type="checkbox"> &quot;show all&quot; button to see every item instead of the cap</li>
+<li><input disabled="" type="checkbox"> make popup-on-icon-hover text a bit larger than browser default</li>
+</ul>
+<h4>Complete</h4>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> defaults for when no fields are nominated as headers</li>
+<li><input checked="" disabled="" type="checkbox"> packaging: JS lib that you point at the div that should become the filterable list of items<ul>
+<li><input checked="" disabled="" type="checkbox"> split into files</li>
+<li><input checked="" disabled="" type="checkbox"> specify a page element that everything gets built into</li>
+<li><input checked="" disabled="" type="checkbox"> trim up the CSS to let the page specify the font and maybe colours<ul>
+<li><input checked="" disabled="" type="checkbox"> default to some nice grey and white, support colours in config<ul>
+<li><input checked="" disabled="" type="checkbox"> allow config to specify CSS vars</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>message display refactor<ul>
+<li><input checked="" disabled="" type="checkbox"> existing &quot;message&quot; is too big for general display / list header / etc</li>
+<li><input checked="" disabled="" type="checkbox"> remember to include support info as specified by config</li>
+<li><input checked="" disabled="" type="checkbox"> background activity indicator</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> include support for icons (just get a name from the Material Icon font)<ul>
+<li><input checked="" disabled="" type="checkbox"> if there&#39;s a URL, do that when the icon is clicked</li>
+<li><input checked="" disabled="" type="checkbox"> support icon field specifying the URL field for clicks (&quot;url&quot; or &quot;URL&quot; field is the default)</li>
+<li><input checked="" disabled="" type="checkbox"> support specifying a field to supply a pop-up tooltip for the icon (&quot;iconTooltip&quot; is the default)</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> &quot;about&quot; key in the config that names the tool, with version number</li>
+<li><input checked="" disabled="" type="checkbox"> fix message backgrounds (good and bad messages don&#39;t have separately customisable bgs)</li>
+<li><input checked="" disabled="" type="checkbox"> create config file</li>
+<li><input checked="" disabled="" type="checkbox"> config: include json data filename</li>
+<li><input checked="" disabled="" type="checkbox"> config: quiet field show/hide config</li>
+<li><input checked="" disabled="" type="checkbox"> config: include contact info for support</li>
+<li><input checked="" disabled="" type="checkbox"> config: colour config</li>
+<li><input checked="" disabled="" type="checkbox"> filtering<ul>
+<li><input checked="" disabled="" type="checkbox"> AND between all options</li>
+<li><input checked="" disabled="" type="checkbox"> show active filters</li>
+<li><input checked="" disabled="" type="checkbox"> active filters have an &quot;x&quot; button to remove that filter</li>
+<li><input checked="" disabled="" type="checkbox"> cap at 200 items (or config supplied cap)</li>
+<li><input checked="" disabled="" type="checkbox"> string search<ul>
+<li><input checked="" disabled="" type="checkbox"> support string searches as a filter type</li>
+<li><input checked="" disabled="" type="checkbox"> allow &quot;hide from search&quot; fields config</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+
+    <script>hljs.highlightAll();</script>
+    <script>
+        // give headings IDs
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+            if (!heading.id) { 
+                heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
+            }
+            const link = document.createElement('a')
+            link.href = '#' + heading.id
+            link.textContent = '#'
+            heading.appendChild(link)
+        });
+        // highlight TODOs
+        document.querySelectorAll('blockquote').forEach((el) => {
+            if (el.textContent.includes('TODO')) { el.classList.add('todo') }
+        });
+    </script>
+</body>
+</html>
