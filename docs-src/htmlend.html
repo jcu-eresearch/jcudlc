@@ -1,0 +1,20 @@
+
+    <script>hljs.highlightAll();</script>
+    <script>
+        // give headings IDs
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+            if (!heading.id) { 
+                heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
+            }
+            const link = document.createElement('a')
+            link.href = '#' + heading.id
+            link.textContent = '#'
+            heading.appendChild(link)
+        });
+        // highlight TODOs
+        document.querySelectorAll('blockquote').forEach((el) => {
+            if (el.textContent.includes('TODO')) { el.classList.add('todo') }
+        });
+    </script>
+</body>
+</html>

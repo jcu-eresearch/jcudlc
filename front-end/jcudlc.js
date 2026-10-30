@@ -487,7 +487,7 @@ function applyFilters() {
                     }
 
                     // if the string search is in an item's field value, keep it
-                    if (itemValues.some( val => val.toLowerCase().includes(s) )) {
+                    if (itemValues.some( val => val.toString().toLowerCase().includes(s) )) {
                         return true
                     }
                 }

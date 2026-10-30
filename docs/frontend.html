@@ -1,0 +1,275 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCU Digital Library Catalogue</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/default.min.css">
+    <style>.hljs { background:none }</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js"></script>
+</head>
+<body>
+<h1>JCU Digital Library Catalogue - Front End</h1>
+<blockquote>
+<p>TODO is there a better title for the front end doc</p>
+</blockquote>
+<h2>Overview</h2>
+<p>The JCU DLC front end takes a data file holding all your <em>items</em>, and presents those items in a Catalogue interface that gives users a searchable, filterable list.</p>
+<p>The Catalogue interface shows a sidebar of filterable dimensions, and a item list displaying the items that match your currently selected filters and searches.</p>
+<h2>Data Prep</h2>
+<blockquote>
+<p>TODO properly link to data prep</p>
+</blockquote>
+<p>Go read the docs for the data prep side.</p>
+<h2>Files</h2>
+<p>Displaying a JCUDLC on a web page requires four files on your web server, in addition to the web page itself.</p>
+<p><strong><code>jcudlc.js</code></strong> is the main JavaScript file that does the job of creating and managing the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
+<p><strong><code>jcudlc-style.css</code></strong> is the CSS file that provides format to the elements within the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
+<p><strong><code>jcudlc-data.json</code></strong> is your data, the list of all the items that the Catalogue will be searching and displaying. You prepare this file using the data-prep process documented elsewhere. The name of this data file can be anything you like, just set it in your config file.</p>
+<p><strong><code>jcudlc-config.json</code></strong> is your configuration. JCUDLC uses sensible defaults so that you will get some kind of reasonable result without having to change much in here, but you will probably want to tweak a few things, and how to do that is documented down below.</p>
+<h2>Setup</h2>
+<p>Add a link to the CSS file inside your page&#39;s <code>&lt;head&gt;</code> tag. If you use icons, also add a link to the icon font.</p>
+<pre><code class="language-html">&lt;head&gt;
+    ...
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&quot; /&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;./jcudlc-style.css&quot; /&gt;
+    ...
+&lt;/head&gt;
+</code></pre>
+<p>Add an empty <code>div</code> tag somewhere in body of your page with an id of <code>jcudlc</code>, wherever you want your Catalogue to show up. When the javascript runs, it will build the Catalogue inside this div.</p>
+<pre><code class="language-html">&lt;body&gt;
+    ...
+    &lt;div id=&quot;jcudlc&quot;&gt;&lt;/div&gt;
+    ...
+</code></pre>
+<p>Add a link to the javascript just before your page&#39;s closing <code>body</code> tag.</p>
+<pre><code class="language-html">    ...
+    &lt;div id=&quot;jcudlc&quot;&gt;&lt;/div&gt;
+    &lt;script src=&quot;./jcudlc.js&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+</code></pre>
+<p>That&#39;s all the page setup. You also need to make sure your files are in place, and then you&#39;re all set!</p>
+<h2>Configuration</h2>
+<p>You use the configuration file to set up how you want the Catalogue to behave.</p>
+<blockquote>
+<p>TODO add all the other config stuff</p>
+</blockquote>
+<h3>Configuration summary table</h3>
+<table>
+<thead>
+<tr>
+<th>Config Key</th>
+<th>Default Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>project</code></td>
+<td><em>(no default)</em></td>
+<td>descriptive</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td><em>(no default)</em></td>
+<td>JCU DLC&#39;s version</td>
+</tr>
+<tr>
+<td><code>copyright</code></td>
+<td><em>(no default)</em></td>
+<td>JCU DLC&#39;s copyright statement</td>
+</tr>
+<tr>
+<td><code>dataUrl</code></td>
+<td><code>./jcudlc-data.json</code></td>
+<td>Where to find the data file containing Catalogue items</td>
+</tr>
+<tr>
+<td><code>titleFields</code></td>
+<td><code>[&#39;header&#39;, &#39;title&#39;, &#39;name&#39;]</code></td>
+<td>Item fields to include as titles in the Header section</td>
+</tr>
+<tr>
+<td><code>subtitleFields</code></td>
+<td><code>[&#39;author&#39;, &#39;authors&#39;, &#39;editors&#39;]</code></td>
+<td>Item fields to include as subtitles in the Header section</td>
+</tr>
+<tr>
+<td><code>hideValues</code></td>
+<td><code>[]</code></td>
+<td>Don&#39;t show item properties with any of these values</td>
+</tr>
+</tbody></table>
+<h3>Locate the data file</h3>
+<p>JCUDLC will load the item list from a JSON file you have prepared with JCU DLC&#39;s back end tools or in some other way. The config key <code>dataUrl</code> specifies that file. Starting with dot-slash <code>./</code> will make the path relative to the web page the Catalogue is running in. By default JCUDLC looks for a file called <code>jcudlc-data.json</code> at the same path as your HTML file.</p>
+<h3>Display item properties</h3>
+<p>Within a single item result, there are three sections in which item properties can appear: a header, a main body, and a &quot;quiet&quot; section. Initially results are displayed with just the header section showing. Clicking or tapping the header opens or closes the main body. If there are fields allocated to the &quot;quiet&quot; section, then a link at the bottom of the main body will open or close the quiet section when clicked or tapped.</p>
+<p>In the image below, you can see three items. These are all closed, so just their header sections are showing.
+<img src="st-tng-closed.png" alt="three items showing just their headers"></p>
+<p>The item header has two parts that JCUDLC refer to as the <em><strong>Title</strong></em> and the <em><strong>Subtitle</strong></em>. You can place fields into these sections using configuration lists <code>titleFields</code> and <code>subtitleFields</code>. For the example shown, this is set to:</p>
+<pre><code class="language-json">&quot;titleFields&quot;: [&quot;title&quot;],
+&quot;subtitleFields&quot;: [&quot;years&quot;],
+</code></pre>
+<p>That configuration will put the item&#39;s <code>title</code> field into the Title part, and the item&#39;s <code>years</code> field into the Subtitle part. If not specified in config, JCUDLC will default to <code>header</code>, <code>title</code>, and <code>name</code> as the title fields, so technically the example didn&#39;t need to specify <code>titleFields</code> at all.</p>
+<p>Defaults for subtitle are <code>author</code>, <code>authors</code>, and <code>editors</code>.</p>
+<p>The formatting of each part is also customisable using JCUDLC&#39;s <a href="#formatting-keywords">formatting keywords</a>. In the example here, we&#39;re using:</p>
+<pre><code class="language-json">&quot;titleFormat&quot;: &quot;bigger bold unlabelled&quot;,
+&quot;subtitleFormat&quot;: &quot;italic&quot;,
+</code></pre>
+<p>The defaults for these are <code>bold unlabelled</code> for <code>titleFormat</code> and <code>italic</code> for <code>subtitleFormat</code>.</p>
+<p>Once the user taps on the &quot;The Next Generation&quot; header, that item expands to display its fields. The image below shows The Next Generation item expanded. In this view, the fields in the header appear only in the header, and the item&#39;s main body contains all the remaining fields.
+<img src="st-tng-open.png" alt="three items, the central item expanded showing more detail"></p>
+<p>Sometimes you might have more obscure, less generally useful fields in your items. You can hide these under a link, so that the expanded item doesn&#39;t show these extra fields by default, but the user can see them if they need to by clicking a link. JCUDLC calls these <em><strong>quiet</strong></em> fields. The image below shows our example item after the user taps on &quot;Additional details&quot;.
+<img src="st-tng-detailed.png" alt="three items, the central item expanded showing more detail"></p>
+<h3>Hide blank values</h3>
+<p>By default it will show all item proerties, but JCUDLC can hide item properties that seem blank. To get this behaviour, supply the <code>hideValues</code> config key, and provide a list of blank-ish values. For example, your data might use any of blank strings, <code>N/A</code>, and <code>NONE</code> for unspecified values, so set <code>hideValues</code> to <code>[&quot;&quot;, &quot;N/A&quot;, &quot;NONE&quot;]</code> to omit any item proerties set to one of those values.</p>
+<h2>Formatting keywords</h2>
+<p>JCUDLC uses keywords for convenient configuration of formatted text. You will supply a list of keywords as a single space-separated string, so if you want your titles to be bold and italic and be a bit smaller than normal text, you can set <code>titleFormat</code> to <code>&quot;bold italic smaller&quot;</code>.</p>
+<p>Not all keywords are valid in all config keys; if a format doesn&#39;t make sense then it won&#39;t work &ndash; for example, <code>unlabelled</code> only applies to the format of item properties.</p>
+<table>
+<thead>
+<tr>
+<th>Formatting keyword</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bold</code></td>
+<td>render text in a <strong>bold</strong> font</td>
+</tr>
+<tr>
+<td><code>italic</code></td>
+<td>render text in an <em>italic</em> font</td>
+</tr>
+<tr>
+<td><code>faded</code></td>
+<td>render text in a greyed-out colour</td>
+</tr>
+<tr>
+<td><code>smaller</code></td>
+<td>render text smaller than normal</td>
+</tr>
+<tr>
+<td><code>bigger</code></td>
+<td>render text bigger than normal</td>
+</tr>
+<tr>
+<td><code>right</code></td>
+<td>right-align text</td>
+</tr>
+<tr>
+<td><code>center</code></td>
+<td>center-align text</td>
+</tr>
+<tr>
+<td><code>unlabelled</code></td>
+<td>don&#39;t show the property label</td>
+</tr>
+</tbody></table>
+<h1>Tasks</h1>
+<blockquote>
+<p>TODO remove this whole section</p>
+</blockquote>
+<ul>
+<li><input disabled="" type="checkbox"> for each filter item, show result count for that additional filter</li>
+<li><input disabled="" type="checkbox"> mobile layout</li>
+<li><input disabled="" type="checkbox"> fonts<ul>
+<li><input checked="" disabled="" type="checkbox"> inherit from page</li>
+<li><input disabled="" type="checkbox"> support font specification in config</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> version numbering<ul>
+<li><input checked="" disabled="" type="checkbox"> write to console</li>
+<li><input disabled="" type="checkbox"> check against config version, etc</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> thorough documentation</li>
+<li><input disabled="" type="checkbox"> divider string (and format?) for displaying multi-value lists</li>
+<li><input disabled="" type="checkbox"> config: support aliases <code>aliases: { &quot;field_A&quot;: &quot;Human Name A&quot;, ... }</code></li>
+</ul>
+<h4>Lower Priority</h4>
+<ul>
+<li><input disabled="" type="checkbox"> support no-config-just-defaults</li>
+<li><input disabled="" type="checkbox"> look up licencing for local hosting of the Material Symbols font</li>
+<li><input disabled="" type="checkbox"> _admin or some similar url thing to switch on &quot;dev&quot; mode</li>
+<li><input disabled="" type="checkbox"> URL looking fields (URL, Link, website, email) that renders a clicky-link</li>
+<li><input disabled="" type="checkbox"> range for numeric field</li>
+<li><input disabled="" type="checkbox"> sorting options</li>
+<li><input disabled="" type="checkbox"> open all / close all for the result discosure/show details</li>
+<li><input disabled="" type="checkbox"> optional icon feature; on hover, or something, offer a button to copy the link</li>
+<li><input disabled="" type="checkbox"> &quot;show all&quot; button to see every item instead of the cap</li>
+<li><input disabled="" type="checkbox"> make popup-on-icon-hover text a bit larger than browser default</li>
+</ul>
+<h4>Complete</h4>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> defaults for when no fields are nominated as headers</li>
+<li><input checked="" disabled="" type="checkbox"> packaging: JS lib that you point at the div that should become the filterable list of items<ul>
+<li><input checked="" disabled="" type="checkbox"> split into files</li>
+<li><input checked="" disabled="" type="checkbox"> specify a page element that everything gets built into</li>
+<li><input checked="" disabled="" type="checkbox"> trim up the CSS to let the page specify the font and maybe colours<ul>
+<li><input checked="" disabled="" type="checkbox"> default to some nice grey and white, support colours in config<ul>
+<li><input checked="" disabled="" type="checkbox"> allow config to specify CSS vars</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>message display refactor<ul>
+<li><input checked="" disabled="" type="checkbox"> existing &quot;message&quot; is too big for general display / list header / etc</li>
+<li><input checked="" disabled="" type="checkbox"> remember to include support info as specified by config</li>
+<li><input checked="" disabled="" type="checkbox"> background activity indicator</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> include support for icons (just get a name from the Material Icon font)<ul>
+<li><input checked="" disabled="" type="checkbox"> if there&#39;s a URL, do that when the icon is clicked</li>
+<li><input checked="" disabled="" type="checkbox"> support icon field specifying the URL field for clicks (&quot;url&quot; or &quot;URL&quot; field is the default)</li>
+<li><input checked="" disabled="" type="checkbox"> support specifying a field to supply a pop-up tooltip for the icon (&quot;iconTooltip&quot; is the default)</li>
+</ul>
+</li>
+<li><input checked="" disabled="" type="checkbox"> &quot;about&quot; key in the config that names the tool, with version number</li>
+<li><input checked="" disabled="" type="checkbox"> fix message backgrounds (good and bad messages don&#39;t have separately customisable bgs)</li>
+<li><input checked="" disabled="" type="checkbox"> create config file</li>
+<li><input checked="" disabled="" type="checkbox"> config: include json data filename</li>
+<li><input checked="" disabled="" type="checkbox"> config: quiet field show/hide config</li>
+<li><input checked="" disabled="" type="checkbox"> config: include contact info for support</li>
+<li><input checked="" disabled="" type="checkbox"> config: colour config</li>
+<li><input checked="" disabled="" type="checkbox"> filtering<ul>
+<li><input checked="" disabled="" type="checkbox"> AND between all options</li>
+<li><input checked="" disabled="" type="checkbox"> show active filters</li>
+<li><input checked="" disabled="" type="checkbox"> active filters have an &quot;x&quot; button to remove that filter</li>
+<li><input checked="" disabled="" type="checkbox"> cap at 200 items (or config supplied cap)</li>
+<li><input checked="" disabled="" type="checkbox"> string search<ul>
+<li><input checked="" disabled="" type="checkbox"> support string searches as a filter type</li>
+<li><input checked="" disabled="" type="checkbox"> allow &quot;hide from search&quot; fields config</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2>Limitations</h2>
+<blockquote>
+<p>TODO not sure what to put here?</p>
+</blockquote>
+
+
+    <script>hljs.highlightAll();</script>
+    <script>
+        // give headings IDs
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+            if (!heading.id) { 
+                heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
+            }
+            const link = document.createElement('a')
+            link.href = '#' + heading.id
+            link.textContent = '#'
+            heading.appendChild(link)
+        });
+        // highlight TODOs
+        document.querySelectorAll('blockquote').forEach((el) => {
+            if (el.textContent.includes('TODO')) { el.classList.add('todo') }
+        });
+    </script>
+</body>
+</html>
