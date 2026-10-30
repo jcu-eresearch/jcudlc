@@ -354,6 +354,8 @@ function buildFilter(fieldId) {
         // TODO: does this need to handle "both empty"?
         if (config.hideValues.includes(a)) return -1
         if (config.hideValues.includes(b)) return 1
+        // if they're numbers, standard compare
+        if (isFinite(a) && isFinite(b)) return a - b
         // otherwise sort alphabetically
         return a.localeCompare(b)
     })
@@ -485,7 +487,7 @@ function applyFilters() {
                     }
 
                     // if the string search is in an item's field value, keep it
-                    if (itemValues.some( val => val.toLowerCase().includes(s) )) {
+                    if (itemValues.some( val => val.toString().toLowerCase().includes(s) )) {
                         return true
                     }
                 }

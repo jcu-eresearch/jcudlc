@@ -232,18 +232,13 @@ copyright (c) James Cook University
     }
     /* ----------------------------------------- */
     .result {
-        margin: 0.5em 0;
-        padding: 0.5em;
+        margin: 0.5rem 0;
+        padding: 0.5rem 1rem;
         border-radius: var(--corner);
         background-color: var(--data-item);
     }
     .result:hover {
         background-color: var(--data-highlight);
-    }
-    .result .header {
-        position: relative;
-        min-height: 4rem;
-        padding: 0.25em 0 0.25em 4.5rem;
     }
     .currentFilters {
         position: relative;
@@ -316,6 +311,15 @@ copyright (c) James Cook University
     .icon                 { opacity: 0.5 }
     .icon.clickable       { opacity: 1; border: 0.14rem solid }
     .icon.clickable:hover { transform: scale(1.3) }
+
+    .result .header {
+        position: relative;
+        padding: 0.25em 0 0.25em;
+    }
+    .result .header:has(.icon) {
+        padding-left: 4.5rem;
+        min-height: 4rem;
+    }
     .result .quietLabel { padding: 0.5em 0 }
     .result .details, .result .quiet { overflow: hidden; }
     .result.closed .details, .result.closed .quiet, .result.terse .quiet {
