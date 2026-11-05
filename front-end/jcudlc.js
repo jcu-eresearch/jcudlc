@@ -96,9 +96,10 @@ function findUsefulField(item, fieldId) {
 // make a display field with a label and value 
 function makeField(fieldId, fieldValue, format) {
 
-    // if the value is a hideValue, then return nothing
-    if (config.hideValues.includes(fieldValue) ||
-        (Array.isArray(fieldValue) && fieldValue.length === 0)) return ''
+    // if the values are all in the hideValues list, then we 
+    // shouldn't show this field at all
+    if (fieldValue.every(val => config.hideValues.includes(val)) ||
+        (fieldValue.length === 0)) return ''
 
     // check config for separator choices
     let separatorString = config.separator || defaultSeparator
