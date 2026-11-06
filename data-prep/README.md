@@ -1,4 +1,4 @@
-# Library data preparation
+# JCU DLC - Data Preparation
 
 This directory contains the tools that convert the Digital Library Collection's
 Excel catalogue and document files into the JSON files consumed by the website.

@@ -1,24 +1,11 @@
 
-# JCU Digital Library Catalogue - Front End
-
-> TODO is there a better title for the front end doc
-
-> TODO probably need a table of contents
-
-> TODO link to parent doc too
+# JCU DLC - Web Interface
 
 ## Overview
 
-The JCU DLC front end takes a data file holding all your *items*, and presents those items in a Catalogue interface that gives users a searchable, filterable list.
+This document describes the web front end of the JCU Digital Library Catalogue, a zero-dependency tool to display and filter a list of items.
 
-The Catalogue interface shows a sidebar of filterable dimensions, and a item list displaying the items that match your currently selected filters and searches.
-
-
-## Data Prep
-
-> TODO properly link to data prep
-
-Go read the docs for the data prep side.
+For general info about the tool, visit the [JCU DLC main page](index.html). For information about preparing your data list, refer to the [JCU DLC Data Prep](dataprep.html) docs.
 
 
 ## Files
@@ -71,19 +58,61 @@ That's all the page setup. You also need to make sure your files are in place, a
 
 You use the configuration file to set up how you want the Catalogue to behave.
 
-> TODO add all the other config stuff
+### Summary tables
 
-### Configuration summary table
+These tables offer a brief summary of configuration keys. Further discussion of some of these settings is included below the tables.
 
-| Config Key               | Default Value                       | Description |
-| ------------------------ | ----------------------------------- | ----------- |
-| `project`                | *(no default)*                      | descriptive |
-| `version`                | *(no default)*                      | JCU DLC's version |
-| `copyright`              | *(no default)*                      | JCU DLC's copyright statement |
-| `dataUrl`                | `./jcudlc-data.json`                | Where to find the data file containing Catalogue items |
-| `titleFields`            | `['header', 'title', 'name']`       | Item fields to include as titles in the Header section |         
-| `subtitleFields`         | `['author', 'authors', 'editors']`  | Item fields to include as subtitles in the Header section |
-| `hideValues`             | `[]`                                | Don't show item properties with any of these values |
+#### Configuration summary table
+
+| Config Key         | Default Value                       | Description |
+| ------------------ | ----------------------------------- | ----------- |
+| `project`          | *(no default)*                      | descriptive |
+| `version`          | *(no default)*                      | JCU DLC's version |
+| `copyright`        | *(no default)*                      | JCU DLC's copyright statement |
+| `dataUrl`          | `./jcudlc-data.json`                | Where to find the data file containing Catalogue items |
+| `titleFields`      | `['header', 'title', 'name']`, otherwise use the item's first field | Item fields to include as titles in the Header section |         
+| `titleFormat`      | `'bold unlabelled'`                 | Format used for the `titleFields` |
+| `subtitleFields`   | `['author', 'authors', 'editors']`  | Item fields to include as subtitles in the Header section |
+| `subtitleFormat`   | `'italic'`                          | Format used for the `subtitleFields` |
+| `quietFields`      | `[]`                                | Fields that should be hidden until revealed |
+| `quietLabel`       | `'more >'`                          | The label the user can click to show the `quietFields` |
+| `quietLabelFormat` | `'faded italic center'`             | Format used for the `quietLabel` |
+| `maxResultCount`   | 100                                 | The maximum number of items to display |
+| `noFilter`         | `[]`                                | Fields that should NOT appear in the filter sidebar |
+| `hideValues`       | `[]`                                | Don't show item properties with any of these values |
+| `separator`        | `'⧸'` (U+29F8, Big Solidus)         | Glyphs used to separate values for multi-valued fields |
+| `separatorFormat`  | `'faded'`                           | Format used for the `separator` |
+| `iconField`        | `icon`                              | The field to use as the icon "name" (see [Google Icons](https://fonts.google.com/icons)) |
+| `iconUrl`          | `'url'`                             | The field containing a URL to load when the icon is clicked |
+| `iconTooltip`      | `iconDescription`                   | The name of the field to use as the icon's tooltip |
+| `hideFromSearch`   | `[]`                                | Fields to NOT include when the user is searching for text |
+| `supportText`      | `''`                                | Text to show the user when there's an error |
+| `aliases`          | Field names with spaces replacing underscores  | Field names to use instead of what's in your data file |
+
+
+#### Styles summary table
+
+Most of JCU DLC's colours and styling can be set in the config file, or in a CSS variable. The default colours set up a dark filter sidebar and a light result column using shades of grey; use these style settings when you want to match your brand colourings.
+
+| Config Key                  <br>CSS Variable                | Default   | Description |
+| ----------------------------------------------------------- | --------- | ----------- |
+| `font`                      <br>`--jcudlc-font-family`      | `inherit` | Font family specification |
+| `filterText`                <br>`--jcudlc-filter-text`      | `#ddd`    | Text colour for filters |
+| `filterColumnBackground`    <br>`--jcudlc-filter-bg`        | `#111`    | Background for the filters column |
+| `filterItemBackground`      <br>`--jcudlc-filter-item`      | `#222`    | Background for a single filter field |
+| `filterActiveBackground`    <br>`--jcudlc-filter-active`    | `#333`    | Background for a hovered-over filter field |
+| `filterHighlightBackground` <br>`--jcudlc-filter-highlight` | `#000`    | Background for a selected filter value |    
+| `dataText`                  <br>`--jcudlc-data-text`        | `#111`    | Text colour for the results column |
+| `dataColumnBackground`      <br>`--jcudlc-data-bg`          | `#bbb`    | Background for the results column |
+| `dataItemBackground`        <br>`--jcudlc-data-item`        | `#fff`    | Background for a single result item |
+| `dataActiveBackground`      <br>`--jcudlc-data-active`      | `#eee`    | Background for the icon |
+| `dataHighlightBackground`   <br>`--jcudlc-data-highlight`   | `#ffffec` | Background for a hovered-over item |
+| `interfaceText`             <br>`--jcudlc-interface-text`   | `dataText` | Text colour for general interface messages |
+| `interfaceBackground`       <br>`--jcudlc-interface-bg`     | `dataActiveBackground` | Background for general interface messages |
+| `alertInfoText`             <br>`--jcudlc-message-good-text`| `#037`    | Text colour for advice text |
+| `alertInfoBackground`       <br>`--jcudlc-message-good-bg`  | `#ecf6ff` | Background for advice text |
+| `alertErrorText`            <br>`--jcudlc-message-bad-text` | `#700`    | Text colour for alarm/error text |
+| `alertErrorBackground`      <br>`--jcudlc-message-bad-bg`   | `#fee`    | Background for alarm/error text |
 
 
 ### Locate the data file

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JCU Digital Library Catalogue</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/styles/default.min.css">
+    <style>.hljs { background:none }</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.12.0/highlight.min.js"></script>
+</head>
+<body>
+<h1>JCU DLC - Data Preparation</h1>
+<p>This directory contains the tools that convert the Digital Library Collection&#39;s
+Excel catalogue and document files into the JSON files consumed by the website.
+The normal entry point is <code>scripts/build-jcudlc-files.sh</code>, which runs the
+Python scripts in the required order. <code>scripts/create-website-datafile.sh</code>
+invokes the same pipeline. Run commands from <code>data-prep</code> unless noted otherwise.</p>
+<h2>What the pipeline does</h2>
+<p>The pipeline:</p>
+<ol>
+<li>Reads the configured worksheet from an Excel workbook.</li>
+<li>Uses four control rows in the workbook to decide which columns are retained,
+searchable, displayed, filterable, or contain multiple values.</li>
+<li>Writes an intermediate cleaned CSV and four configuration CSV files.</li>
+<li>Optionally copies active, open-access documents with <code>--with-documents</code> into the output directory and normalises
+spaces and <code>/</code> characters in their filenames to underscores.</li>
+<li>Removes inactive records, changes records with invalid access or missing
+access files/URLs to <code>Contact us</code>, generates URLs and icons, and writes the
+website&#39;s library index. Open records prefer a matching output document
+and otherwise use the spreadsheet URL.</li>
+<li>Merges static frontend settings with generated workbook settings to create
+the display configuration used by the website.</li>
+</ol>
+<p>The generated website files are:</p>
+<ul>
+<li><code>outputs/jcudlc-data.json</code> — the processed catalogue records.</li>
+<li><code>outputs/jcudlc-config.json</code> — static frontend settings plus generated filter,
+search and quiet-field settings.</li>
+<li><code>outputs/documents/</code> — copied open-access documents.</li>
+</ul>
+<p>Intermediate CSV files are also written to <code>outputs/</code> for inspection.</p>
+<h2>Requirements</h2>
+<ul>
+<li>Bash (the wrapper script is a Bash script).</li>
+<li>Python 3.11 or newer, with virtual environment support.</li>
+<li>An <code>.xlsx</code> workbook with the structure described below.</li>
+<li>Source documents when copying local open-access files.</li>
+<li>The static frontend settings file configured in YAML.</li>
+</ul>
+<p>The Python requirements file installs the processing libraries, including
+<code>pandas</code>, <code>openpyxl</code>, <code>PyYAML</code>, and <code>structlog</code>, plus their pinned
+dependencies. The wrapper uses POSIX virtual-environment paths, so run it on
+macOS or Linux, or in a Linux environment such as WSL rather than native
+Windows Command Prompt or PowerShell.</p>
+<p>Run the setup commands from <code>data-prep</code>:</p>
+<pre><code class="language-bash">python3 -m venv scripts/.venv
+scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
+</code></pre>
+<p>The wrapper expects the virtual environment at <code>scripts/.venv</code> and invokes its
+Python interpreter directly.</p>
+<p>For a first run using the included sample data:</p>
+<pre><code class="language-bash">cd data-prep
+python3 -m venv scripts/.venv
+scripts/.venv/bin/python -m pip install -r scripts/requirements.txt
+bash scripts/build-jcudlc-files.sh --with-documents
+</code></pre>
+<h2>Directory layout</h2>
+<p>The default layout is:</p>
+<pre><code class="language-text">data-prep/
+├── inputs/
+│   └── jcudlc-config-static.json
+├── logs/
+├── outputs/
+│   └── documents/
+├── scripts/
+└── tests/
+</code></pre>
+<p>The default workbook and source documents are in the sibling <code>../examples/</code>
+directory. You can configure other input locations in YAML or pass them in as
+command line arguments to the <code>build-jcudlc-files.sh</code> script.</p>
+<p>The workbook, document source, output, and log paths are configured under
+<code>runtime</code> in <code>scripts/library-config.yml</code>:</p>
+<pre><code class="language-yaml">runtime:
+  excel_file: ../examples/library-index.xlsx
+  documents_dir: ../examples/documents
+  output_dir: outputs
+  log_dir: logs
+  static_config_file: inputs/jcudlc-config-static.json
+</code></pre>
+<p>Relative paths are resolved from the directory where the pipeline is run. The
+wrapper and individual Python scripts use these same defaults.</p>
+<p>The script creates <code>logs/</code>, <code>outputs/</code>, and <code>outputs/documents/</code> if necessary.
+Create the source documents directory yourself and place the documents there.
+When enabled with <code>--with-documents</code>, the document-copying stage stops with an error if it finds no source
+files.</p>
+<h2>Prepare the workbook</h2>
+<p>The default workbook is <code>../examples/library-index.xlsx</code>. Its layout is controlled by
+<code>scripts/library-config.yml</code>; by default the worksheet must be named <strong><code>MAIN</code></strong>,
+matching the example workbook, and use these rows:</p>
+<table>
+<thead>
+<tr>
+<th>Excel row</th>
+<th>Purpose</th>
+<th>Accepted markers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2</td>
+<td>Retain the column and optionally make it a filter</td>
+<td><code>Filter_yes</code>, <code>Filter_no</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Include the column in text search</td>
+<td><code>Search_yes</code>, <code>Search_no</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Include the column in the published JSON</td>
+<td><code>FullDisplay_yes</code>, <code>FullDisplay_no</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Treat semicolon-separated cells as multiple values</td>
+<td><code>MultiOption_yes</code>, <code>MultiOption_no</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Column headings</td>
+<td>See the required headings below</td>
+</tr>
+<tr>
+<td>7 onward</td>
+<td>Catalogue records</td>
+<td>One record per row</td>
+</tr>
+</tbody></table>
+<p>Use the marker spelling and capitalisation shown above. Leading and trailing
+whitespace is removed, but the later marker-to-Boolean conversion is
+case-sensitive.</p>
+<p>Every column that should enter the pipeline must have either <code>Filter_yes</code> or
+<code>Filter_no</code> in row 2. A blank or unrecognised value causes that entire column to
+be dropped when at least one valid filter marker exists elsewhere in the row.
+<code>Filter_no</code> retains the column; it only prevents the column from becoming a
+website filter. Do not leave the entire filter row blank.</p>
+<p>For every retained column, also provide the appropriate <code>_yes</code> or <code>_no</code> marker
+in rows 3–5. Blank configuration cells are not a supported substitute for the
+<code>_no</code> markers and can cause later stages to fail while reading the generated
+configuration CSV files.</p>
+<p>The configured required headings are:</p>
+<ul>
+<li><code>ID</code></li>
+<li><code>Title</code></li>
+<li><code>Year</code></li>
+<li><code>Access</code></li>
+<li><code>PDF_file_name</code></li>
+<li><code>Published_URL</code></li>
+<li><code>Portal_Status</code></li>
+</ul>
+<p>The exact names can be changed under <code>columns</code> in <code>scripts/library-config.yml</code>.
+The generated <code>URL</code> and <code>Icon</code> fields must not be added to the workbook.</p>
+<p>For fields marked <code>MultiOption_yes</code>, separate values with semicolons, for
+example:</p>
+<pre><code class="language-text">Coastal; Wetlands; Estuarine
+</code></pre>
+<h3>Access and status values</h3>
+<p>The default accepted values are case-sensitive during final processing:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Value</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Portal_Status</code></td>
+<td><code>Active</code></td>
+<td>Include the record. Other values are excluded.</td>
+</tr>
+<tr>
+<td><code>Access</code></td>
+<td><code>Open</code></td>
+<td>Prefer a matching output document; otherwise use <code>Published_URL</code>.</td>
+</tr>
+<tr>
+<td><code>Access</code></td>
+<td><code>Access via publisher</code></td>
+<td>Use <code>Published_URL</code> as the record URL.</td>
+</tr>
+<tr>
+<td><code>Access</code></td>
+<td><code>Contact us</code></td>
+<td>Use the configured contact/library behaviour.</td>
+</tr>
+</tbody></table>
+<p>For an <code>Open</code> record with a local document, <code>PDF_file_name</code> must match a file
+below the document source directory (<code>../examples/documents/</code> by default).
+Files may be organised in subdirectories. Run with <code>--with-documents</code> to copy
+eligible files into <code>outputs/documents/</code>. During copying, spaces and <code>/</code>
+characters in output filenames are replaced with <code>_</code>. Index generation also
+normalises filenames and updates the intermediate CSV, even when copying is
+skipped.</p>
+<p>A file present only in the source directory does not satisfy the index&#39;s
+local-file check. Validation uses the selected output directory&#39;s <code>documents/</code>
+subfolder. If no matching output file exists, an <code>Open</code> record can instead use
+its <code>Published_URL</code>, including when the filename is blank.</p>
+<p>Source document basenames must be unique across all subdirectories. They must
+also remain unique after filename normalisation (for example, <code>report one.pdf</code>
+and <code>report_one.pdf</code> would collide in the flat output directory).</p>
+<p>An <code>Access via publisher</code> record should contain a valid <code>Published_URL</code>.
+If an active record has an invalid <code>Access</code> value, an <code>Open</code> record has no
+matching copied file or spreadsheet URL, or an <code>Access via publisher</code> record has no URL, the
+record remains in the JSON with <code>Access</code> changed to <code>Contact us</code>. The index
+script logs a warning with the record ID and the problem to fix in the next
+spreadsheet update. The workbook is unchanged. Access corrections apply to the final JSON; the
+intermediate CSV retains source access values but uses normalised filenames.</p>
+<p>These access/status values, generated URL prefixes and icons can be changed
+in <code>scripts/library-config.yml</code>. Browser URLs are separate from local paths.
+Include any deployment base path needed by the website in download and contact
+URLs; the current frontend opens catalogue URLs directly.</p>
+<h3>Placeholder cleanup</h3>
+<p>Configure exact, case-sensitive missing-value markers in
+<code>scripts/library-config.yml</code>:</p>
+<pre><code class="language-yaml">excel:
+  empty_cell_markers: [&quot;NA&quot;, &quot;nan&quot;, &quot;NaN&quot;, &quot;N/A&quot;, &quot;n/a&quot;, &quot;NULL&quot;]
+</code></pre>
+<p>Strings are trimmed before matching. Matching cells become empty text, as do
+actual missing values. The markers apply across the worksheet.</p>
+<p>Set <code>empty_cell_markers: []</code> to preserve text such as <code>NA</code>, <code>N/A</code> and <code>NULL</code>.
+Otherwise, list the exact text values that should be replaced with blanks.
+Pandas&#39; implicit NA-string conversion is disabled so values omitted from this
+list are preserved.</p>
+<h3>Frontend settings</h3>
+<p>Edit the tracked <code>inputs/jcudlc-config-static.json</code> for colours, titles, fonts,
+aliases, data URL, hidden values, maximum result count, icon tooltip, support
+text and other frontend preferences. The file must contain a JSON object.
+Its defaults come from this repository&#39;s <code>front-end</code> example, with <code>Access</code> as
+the tooltip label. The path is configured by <code>runtime.static_config_file</code>.</p>
+<p>Generated <code>noFilter</code> and <code>hideFromSearch</code> override those keys in static settings.
+<code>quietFields</code> combines explicitly configured quiet fields with generated URL/icon
+fields. Aliases are included alongside original field names in these lists.
+<code>FullDisplay_yes</code> and <code>FullDisplay_no</code> determine whether fields are included in
+the published JSON. They do not control which public fields appear under
+“Additional details”; use <code>quietFields</code> for that.</p>
+<p>The pipeline generates <code>jcudlc-config.json</code> directly. It no longer generates
+<code>query-config.json</code> or <code>library-config.json</code>.</p>
+<h2>Run the pipeline</h2>
+<p>For a first run or when adding source documents, run from <code>data-prep</code>:</p>
+<pre><code class="language-bash">bash scripts/build-jcudlc-files.sh --with-documents
+</code></pre>
+<p>For metadata/configuration updates using documents already in the output folder:</p>
+<pre><code class="language-bash">bash scripts/build-jcudlc-files.sh
+</code></pre>
+<p>Document copying is skipped by default. To copy from a different source:</p>
+<pre><code class="language-bash">bash scripts/build-jcudlc-files.sh --with-documents \
+  --documents-dir &quot;/path/to/primary library document storage&quot;
+</code></pre>
+<p><code>scripts/create-website-datafile.sh</code> supports the same options and invokes the
+shared build pipeline.</p>
+<p>The repository currently stores the wrapper without its executable bit. If you
+prefer to invoke it directly, first run:</p>
+<pre><code class="language-bash">chmod +x scripts/build-jcudlc-files.sh
+./scripts/build-jcudlc-files.sh
+</code></pre>
+<p>The wrapper removes existing <code>logs/*.log</code> files and <code>outputs/*.csv</code> and
+<code>outputs/*.json</code> files before starting. It does not clear
+<code>outputs/documents/</code>, so remove obsolete copied documents manually when needed.</p>
+<p>When processing finishes, inspect the terminal summary and all files in <code>logs/</code>.
+A successful exit only means that every stage completed; records and documents
+can still have been skipped with warnings.</p>
+<p>Useful checks include:</p>
+<pre><code class="language-bash">grep -iE &#39;warn|error&#39; logs/*.log
+ls -lh outputs/*.json
+</code></pre>
+<p>After checking the generated JSON and documents, copy or integrate them into the
+website&#39;s expected data location as required by the website build. The pipeline does not publish
+results automatically. With the supplied frontend, <code>jcudlc-config.json</code> is
+fetched relative to the catalogue page; the data location is set by <code>dataUrl</code>.
+Copy documents to the location matching <code>website.urls.download_prefix</code>, then
+check download/contact links and filtering/search in a website preview.</p>
+<h3>Build script usage statement</h3>
+<pre><code>Usage: ./scripts/build-jcudlc-files.sh [--excel-file FILE] [--documents-dir DIR] [--output-dir DIR] [--log-dir DIR] [--with-documents]
+  --with-documents  Run get-library-docs.py (skipped by default).
+</code></pre>
+<h3>Sample output from build script</h3>
+<pre><code>$ bash ./scripts/build-jcudlc-files.sh
+Script started at: 2026-10-09 12:35:58 AEST
+Removing any previous /Users/jc350584/github/jcudlc/data-prep/logs/*.log files
+Removing any previous /Users/jc350584/github/jcudlc/data-prep/outputs *.csv and *.json files
+Using Python virtual environment /Users/jc350584/github/jcudlc/data-prep/scripts/.venv
+Running parse-excel-file.py ...
+Skipping get-library-docs.py (use --with-documents to run it).
+Running create-library-index.py ...
+Running create-library-config.py ...
+SUCCESS | No errors but you should still check the log files for warnings.
+--- Info entries in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-index.log ---
+2026-10-09 12:36:03 [info     ] Loading csv file from /Users/jc350584/github/jcudlc/data-prep/outputs/library-index.csv.
+2026-10-09 12:36:03 [info     ] Initial # rows loaded: 18
+2026-10-09 12:36:03 [info     ] Extracted only the Active records to process
+2026-10-09 12:36:03 [info     ] Number of docs dropped due to Status not set to Active is 3
+2026-10-09 12:36:03 [info     ] Number of Active records kept: 15
+2026-10-09 12:36:03 [info     ] Number of invalid access values changed to Contact us: 0
+2026-10-09 12:36:03 [info     ] Number of Open records without a matching file or URL changed to Contact us: 2
+2026-10-09 12:36:03 [info     ] Number of Access via publisher records without a publisher URL changed to Contact us: 1
+2026-10-09 12:36:03 [info     ] The multi-option fields for libary are: [&#39;Species_Group&#39;, &#39;Habitat&#39;, &#39;Keywords&#39;]
+2026-10-09 12:36:03 [info     ] Dropped [&#39;Notes_Internal&#39;] columns
+2026-10-09 12:36:03 [info     ] Creating library_index for website, /Users/jc350584/github/jcudlc/data-prep/outputs/jcudlc-data.json
+2026-10-09 12:36:03 [info     ] Documents in library, final count: 15
+2026-10-09 12:36:03 [info     ] Wrote JSON file to /Users/jc350584/github/jcudlc/data-prep/outputs/jcudlc-data.json
+2026-10-09 12:36:03 [info     ] Library index file creation is complete
+--- Warnings in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-index.log ---
+2026-10-09 12:36:03 [warning  ] ID NQ-016 | PDF_file_name &#39;northern_bettong_woodland_survey_missing.pdf&#39; has no matching file in /Users/jc350584/github/jcudlc/data-prep/outputs/documents and Published_URL is blank for Open access; changed Access to &#39;Contact us&#39;. Correct the filename, add the PDF, or provide a URL in the next update.
+2026-10-09 12:36:03 [warning  ] ID NQ-017 | PDF_file_name is blank and Published_URL is blank for Open access; changed Access to &#39;Contact us&#39;. Correct the filename, add the PDF, or provide a URL in the next update.
+2026-10-09 12:36:03 [warning  ] ID NQ-018 | Published_URL is blank for Access via publisher record; changed Access to &#39;Contact us&#39;. Add the publisher URL in the next spreadsheet update.
+--- Warnings in /Users/jc350584/github/jcudlc/data-prep/logs/create-library-config.log ---
+(no warnings found)
+If all good then you are ready to build the website.
+Script finished at: 2026-10-09 12:36:03 AEST with exit code 0
+</code></pre>
+<h2>Use non-default paths</h2>
+<p>The wrapper accepts command-line overrides for the configured workbook,
+document, output, and log paths:</p>
+<pre><code class="language-bash">bash scripts/build-jcudlc-files.sh --with-documents \
+  --excel-file /path/to/spreadsheets/catalogue.xlsx \
+  --documents-dir /path/to/source-documents \
+  --output-dir /path/to/output \
+  --log-dir /path/to/logs
+</code></pre>
+<p><code>--excel-file</code> directly identifies the workbook; there is no separate input
+directory setting. Relative override paths are resolved from the directory in
+which the command is run. Copied documents are written to a <code>documents/</code>
+directory below the selected output directory.</p>
+<p>For example, run the repository&#39;s sample workbook and documents from
+<code>data-prep</code> with:</p>
+<pre><code class="language-bash">bash scripts/build-jcudlc-files.sh --with-documents \
+  --excel-file ../examples/library-index.xlsx \
+  --documents-dir ../examples/documents
+</code></pre>
+<p>Run <code>bash scripts/build-jcudlc-files.sh --help</code> to see the available
+options.</p>
+<h2>What else is needed?</h2>
+<p>Nothing else is required to generate the files locally once Python, the Python
+packages, a correctly structured workbook, static frontend settings and any
+needed source documents are in
+place. For a complete website publishing workflow, account for these additional
+operational steps:</p>
+<ul>
+<li>The pipeline does not copy its results into the Jekyll site or publish them.
+Add a deliberate copy/build/deploy step after reviewing the outputs.</li>
+<li>The pipeline clears old top-level CSV and JSON outputs, but not
+<code>outputs/documents/</code>. Remove documents that are no longer in the catalogue so
+stale files are not deployed.</li>
+<li><code>inputs/</code>, <code>outputs/</code>, and <code>logs/</code> are intentionally ignored by Git apart from
+their <code>.gitkeep</code> files and the tracked <code>inputs/jcudlc-config-static.json</code>.
+Store the authoritative workbook and documents in an appropriate managed location and back them up separately.</li>
+<li>Treat warnings as data-quality failures to investigate: a zero exit code does
+not guarantee that every spreadsheet record or document was included.</li>
+</ul>
+<h2>Script reference</h2>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>build-jcudlc-files.sh</code></td>
+<td>Validates paths, clears prior CSV/JSON/log outputs, uses the project virtual environment, optionally copies documents, and prints info/warning summaries.</td>
+</tr>
+<tr>
+<td><code>create-website-datafile.sh</code></td>
+<td>Invokes the shared build pipeline with the same arguments.</td>
+</tr>
+<tr>
+<td><code>parse-excel-file.py</code></td>
+<td>Reads Excel, normalises configured placeholders, applies control rows, drops records without an ID, validates required columns, and writes the intermediate CSV/configuration CSV files.</td>
+</tr>
+<tr>
+<td><code>get-library-docs.py</code></td>
+<td>Finds source documents recursively, copies active open-access files, and normalises copied filenames. Runs only with <code>--with-documents</code> in the wrapper.</td>
+</tr>
+<tr>
+<td><code>create-library-index.py</code></td>
+<td>Normalises index filenames, removes inactive records, changes invalid or incomplete access details to <code>Contact us</code> with warnings, splits multi-value fields, generates URLs/icons, removes non-public columns, and writes <code>jcudlc-data.json</code>.</td>
+</tr>
+<tr>
+<td><code>create-library-config.py</code></td>
+<td>Merges static JSON and generated control-row settings into <code>jcudlc-config.json</code>.</td>
+</tr>
+<tr>
+<td><code>confighelper.py</code></td>
+<td>Loads and validates <code>library-config.yml</code> and resolves runtime paths.</td>
+</tr>
+<tr>
+<td><code>libhelper.py</code></td>
+<td>Provides shared filename normalisation.</td>
+</tr>
+</tbody></table>
+<p>Although the Python scripts can be run individually, later stages depend on
+files produced by earlier stages. Use the wrapper for routine runs.</p>
+<h2>Troubleshooting</h2>
+<h3>The spreadsheet cannot be read</h3>
+<p>Confirm that the workbook path is correct, the configured worksheet exists, and
+the workbook is a valid <code>.xlsx</code> file. The default worksheet name is <code>MAIN</code>.</p>
+<h3>A configured column is reported missing</h3>
+<p>Confirm that its row 6 heading exactly matches <code>scripts/library-config.yml</code> and
+that its row 2 cell contains <code>Filter_yes</code> or <code>Filter_no</code>. An unmarked column is
+dropped before required-column validation.</p>
+<h3>An open-access record appears as <code>Contact us</code></h3>
+<p>Check <code>logs/create-library-index.log</code> and, when copying was enabled,
+<code>logs/get-library-docs.log</code>. Confirm that the record is <code>Active</code>, its access
+value is <code>Open</code>, and either a matching normalised file exists in the selected
+output directory&#39;s <code>documents/</code> folder or <code>Published_URL</code> is non-blank.
+Run with <code>--with-documents</code> if the file exists only in the source directory
+(<code>../examples/documents/</code> by default).</p>
+<h3>A record is unexpectedly omitted</h3>
+<p>Check that <code>Portal_Status</code> is <code>Active</code> and the record has an ID. Active records
+with invalid access or missing access-specific information remain in the JSON
+as <code>Contact us</code>; check <code>logs/create-library-index.log</code> for the warning.</p>
+<h3>A column is missing from the final JSON</h3>
+<p>It must be retained with a valid row 2 filter marker and set to
+<code>FullDisplay_yes</code> in row 4. <code>FullDisplay_no</code> removes the field from the published
+index.</p>
+<h3>A filter or multi-value field behaves incorrectly</h3>
+<p>Check the exact control-row marker spelling. For multi-value fields, use <code>;</code> as
+the separator. Empty or whitespace-only spreadsheet cells remain empty in the
+CSV and JSON. Empty multi-value cells become empty arrays in the JSON.
+Text such as <code>n/a</code> becomes empty when listed in <code>excel.empty_cell_markers</code>.
+Remove it from that list if it should remain literal text.</p>
+<h3>The static frontend settings cannot be read</h3>
+<p>Confirm that <code>runtime.static_config_file</code> points to an existing JSON file and
+that the file contains a JSON object. The default file extension is <code>.json</code>,
+not <code>.yml</code>. Rerun the pipeline after changing either YAML or static JSON settings.</p>
+<h2>Tests</h2>
+<p>Run the regression tests from <code>data-prep</code>:</p>
+<pre><code class="language-bash">scripts/.venv/bin/python -B -m unittest discover -s tests -v
+</code></pre>
+<p>The tests cover download selection and fallback, configurable placeholder
+cleanup, configuration validation and preservation of literal Excel values.</p>
+
+
+    <script>hljs.highlightAll();</script>
+    <script>
+        // === process headings ===
+
+        // ToC collection
+        const tocDiv = document.createElement('div')
+        const toc = document.createElement('ul')
+        const tocStack = [toc]
+        let tocCount = 0
+        tocDiv.classList.add('toc')
+        tocDiv.innerHTML = '<p>On this page</p>'
+        tocDiv.appendChild(toc)
+
+        // loop through headings
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+            // give the heading an ID
+            if (!heading.id) {
+                heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
+            }
+
+            // add this heading to the ToC
+            const level = parseInt(heading.tagName[1])
+            while (tocStack.length > level) tocStack.pop()
+            const li = document.createElement('li')
+            const a = document.createElement('a')
+            a.href = '#' + heading.id
+            a.textContent = heading.textContent
+            li.appendChild(a)
+            tocStack[tocStack.length - 1].appendChild(li)
+            const subUl = document.createElement('ul')
+            li.appendChild(subUl)
+            tocStack.push(subUl)
+            tocCount += 1
+
+            // add a link to the heading itself
+            const link = document.createElement('a')
+            link.href = '#' + heading.id
+            link.textContent = '#'
+            heading.appendChild(link)
+        });
+
+        if (tocCount > 4) {
+            document.body.insertBefore(tocDiv, document.querySelector('h1').nextSibling)
+        }
+        
+        // === highlight TODOs ===
+        document.querySelectorAll('blockquote').forEach((el) => {
+            if (el.textContent.includes('TODO')) { el.classList.add('todo') }
+        });
+    </script>
+</body>
+</html>

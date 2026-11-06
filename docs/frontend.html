@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -57,7 +58,11 @@
 &lt;/body&gt;
 </code></pre>
 <p>That&#39;s all the page setup. You also need to make sure your files are in place, and then you&#39;re all set!</p>
-<h2>Configuration</h2>
+<h1>Configuration</h1>
+<h2>h2</h2>
+<h3>h3</h3>
+<h4>h4 asdfasedf</h4>
+<h4>h4 asdfasedf</h4>
 <p>You use the configuration file to set up how you want the Catalogue to behave.</p>
 <blockquote>
 <p>TODO add all the other config stuff</p>
@@ -181,17 +186,50 @@
 
     <script>hljs.highlightAll();</script>
     <script>
-        // give headings IDs
+        // === process headings ===
+
+        // ToC collection
+        const tocDiv = document.createElement('div')
+        const toc = document.createElement('ul')
+        const tocStack = [toc]
+        let tocCount = 0
+        tocDiv.classList.add('toc')
+        tocDiv.innerHTML = '<p><b>On this page</b></p>'
+        tocDiv.appendChild(toc)
+
+        // loop through headings
         document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
-            if (!heading.id) { 
+            // give the heading an ID
+            if (!heading.id) {
                 heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
             }
+
+            // add this heading to the ToC
+            const level = parseInt(heading.tagName[1])
+            while (tocStack.length > level) tocStack.pop()
+            const li = document.createElement('li')
+            const a = document.createElement('a')
+            a.href = '#' + heading.id
+            a.textContent = heading.textContent
+            li.appendChild(a)
+            tocStack[tocStack.length - 1].appendChild(li)
+            const subUl = document.createElement('ul')
+            li.appendChild(subUl)
+            tocStack.push(subUl)
+            tocCount += 1
+
+            // add a link to the heading itself
             const link = document.createElement('a')
             link.href = '#' + heading.id
             link.textContent = '#'
             heading.appendChild(link)
         });
-        // highlight TODOs
+
+        if (tocCount > 4) {
+            document.body.insertBefore(tocDiv, document.querySelector('h1').nextSibling)
+        }
+        
+        // === highlight TODOs ===
         document.querySelectorAll('blockquote').forEach((el) => {
             if (el.textContent.includes('TODO')) { el.classList.add('todo') }
         });

@@ -1,17 +1,50 @@
 
     <script>hljs.highlightAll();</script>
     <script>
-        // give headings IDs
+        // === process headings ===
+
+        // ToC collection
+        const tocDiv = document.createElement('div')
+        const toc = document.createElement('ul')
+        const tocStack = [toc]
+        let tocCount = 0
+        tocDiv.classList.add('toc')
+        tocDiv.innerHTML = '<p>On this page</p>'
+        tocDiv.appendChild(toc)
+
+        // loop through headings
         document.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
-            if (!heading.id) { 
+            // give the heading an ID
+            if (!heading.id) {
                 heading.id = heading.textContent.trim().toLowerCase().replace(/\s+/g, '-')
             }
+
+            // add this heading to the ToC
+            const level = parseInt(heading.tagName[1])
+            while (tocStack.length > level) tocStack.pop()
+            const li = document.createElement('li')
+            const a = document.createElement('a')
+            a.href = '#' + heading.id
+            a.textContent = heading.textContent
+            li.appendChild(a)
+            tocStack[tocStack.length - 1].appendChild(li)
+            const subUl = document.createElement('ul')
+            li.appendChild(subUl)
+            tocStack.push(subUl)
+            tocCount += 1
+
+            // add a link to the heading itself
             const link = document.createElement('a')
             link.href = '#' + heading.id
             link.textContent = '#'
             heading.appendChild(link)
         });
-        // highlight TODOs
+
+        if (tocCount > 4) {
+            document.body.insertBefore(tocDiv, document.querySelector('h1').nextSibling)
+        }
+        
+        // === highlight TODOs ===
         document.querySelectorAll('blockquote').forEach((el) => {
             if (el.textContent.includes('TODO')) { el.classList.add('todo') }
         });

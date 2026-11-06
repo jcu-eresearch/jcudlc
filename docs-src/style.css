@@ -10,7 +10,7 @@ html {
     --big-header-bg-color: var(--strong-color);
     --big-header-text-color: var(--strong-offset);
 
-    --body-width: 35rem;
+    --body-width: 38rem;
 
     font-family: lato, sans-serif;
     font-size: 18px;
@@ -109,15 +109,15 @@ html {
 
   a, a:visited {
     display: inline-block;
-    color: var(--strong-color);
-    text-decoration-color: alpha(from var(--strong-color) / 33%);
-    text-decoration-style: dotted;
-    text-decoration-thickness: 0.1rem;
+    color: alpha(from var(--strong-color) / 90%);
+    text-decoration-color: alpha(from var(--strong-color) / 20%);
+    text-decoration-style: solid;
+    text-decoration-thickness: 0.2em;
   }
 
   a:hover {
-    text-decoration-color: alpha(from var(--strong-color) / 66%);
-    text-decoration-style: solid;
+    color: var(--strong-color);
+    text-decoration-color: alpha(from var(--strong-color) / 65%);
   }
 
   body > p > img {
@@ -133,7 +133,7 @@ html {
   }
 
   body > table {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     max-width: var(--body-width);
     margin: 1.5em 0 2.5rem;
     border-collapse: collapse;
@@ -201,3 +201,43 @@ html {
       45deg, yellow, yellow 1.5em, rgb(255, 200, 0) 1.5em, rgb(255,200,0) 3em
     );
   }
+
+  .toc {
+    font-size: 0.95rem;
+    background: var(--code-bg-color);
+    border: 1px solid var(--strong-color);
+    padding: 0.5em 1em;
+    margin: 1em 0;
+  }
+  .toc a { text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc p {
+    font-size: 0.85rem;
+    opacity: 0.45;
+    font-style: italic;
+    font-weight: bold;
+    font-variant: all-small-caps;
+    letter-spacing: 0.05em;
+  }
+  .toc ul {
+    line-height: 1.2;
+    list-style: none;
+    margin: 0;
+    padding: 0.15em 0;
+  }
+  .toc > ul > li:first-child > a {
+    display: none;
+  }
+  .toc li {
+    padding: 0;
+    text-indent: 0;
+  }
+  .toc li { font-weight: bold; }
+  .toc li li { font-weight: normal; }
+  .toc li li li { font-size: 0.75rem; }
+
+  .toc li li { padding-left: 0; }
+  .toc li li li { padding-left: 0.66em; }
+  .toc li li li li { padding-left: 1.33em; }
+  .toc li li li li li { padding-left: 2em; }
+  .toc li li li li li li { padding-left: 2.66em; }
