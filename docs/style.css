@@ -177,7 +177,7 @@ html {
 
   /* override some Prism sourcecode highlight styles */
   pre[class*="language-"] {
-    line-height: 1.2;
+    line-height: 1.4;
     overflow-x: auto;
     background: var(--code-bg-color);
   }

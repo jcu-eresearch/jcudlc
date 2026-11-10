@@ -10,7 +10,9 @@ For general info about the tool, visit the [JCU DLC main page](index.html). For 
 
 ## Quick start
 
-A complete HTML page that works is:
+You need five files to get an example JCUDLC working.
+
+The first is a HTML page. Later you can expand this with more content, but for now a minimal HTML page that works is:
 
 ```html
 <!DOCTYPE html>
@@ -36,9 +38,57 @@ A complete HTML page that works is:
 
 Save this content as `index.html`. 
 
-In the same directory, save `jcudlc.js` and `jcudlc-style.css`, and a sample data file such as this:
+Visit the github repository page for [`jcudlc.js`](https://github.com/jcu-eresearch/jcudlc/blob/main/web/jcudlc.js), find the download button, and save the file to the same directory as your `index.html`.
 
-> TODO finish this once the repo paths are stable
+Do the same for [`jcudlc-style.css`](https://github.com/jcu-eresearch/jcudlc/blob/main/web/jcudlc-style.css), saving it to the same directory.
+
+Next we'll set up a sample data file. Here's one with a few entries; save this as `jcudlc-data.json` in the same directory as your other files.
+
+```json
+[
+    {
+        "title": "The Animated Series",
+        "seasons": "2",
+        "years": "1973-1974",
+        "format": "animated",
+        "icon": "groups"
+    },
+    {
+        "title": "The Next Generation",
+        "seasons": "7",
+        "years": "1987-1994",
+        "format": "live action",
+        "icon": "borg"
+    },
+    {
+        "title": "Deep Space Nine",
+        "seasons": "7",
+        "years": "1993-1999",
+        "format": "live action",
+        "icon": "orbit"
+    }
+]
+```
+And finally, a minimal configuration. Save the content below into a file called `jcudlc-config.json` in the same directory as everything else.
+
+```json
+{
+  "titleFields": ["title"],
+  "subtitleFields": ["years"],
+  "noFilter": [ "title", "years" ],
+  "quietFields": [ "icon" ]
+}
+```
+
+That's it! If you serve this directory using [Caddy](https://caddyserver.com/) or a similar tool and load the index.html file into a browser, you should see an example of the JCU DLC showing info about a few Star Trek series.
+
+If you're using Caddy, this command line will start a https server at [https://localhost](https://localhost). You may need to approve some certificate management actions first.
+
+```bash
+$ caddy file-server --domain localhost
+```
+
+> TODO try this
 
 
 ## Files

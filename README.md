@@ -101,6 +101,7 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Higher Priority
 
+- [ ] show an alert when being served from a file:// URL 
 - [ ] when there's no filters, update top text to say "showing 200 out of 12345 total items" or something like that
 - [ ] for each filter item, show result count for that additional filter
 - [ ] mobile layout
