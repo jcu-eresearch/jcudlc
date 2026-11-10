@@ -8,6 +8,39 @@ This document describes the web front end of the JCU Digital Library Catalogue, 
 For general info about the tool, visit the [JCU DLC main page](index.html). For information about preparing your data list, refer to the [JCU DLC Data Prep](dataprep.html) docs.
 
 
+## Quick start
+
+A complete HTML page that works is:
+
+```html
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>JCU DLC Example</title>
+        <!-- grab the Google Material Symbols font for icons -->
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+        <link rel="stylesheet" href="./jcudlc-style.css" />
+        <style>
+            body { font-family: sans-serif; }
+        </style>
+    </head>
+    <body>
+        <h1>JCU Digital Library Catalogue example</h1>
+        <div id="jcudlc">
+            <!-- catalog goes here -->
+        </div>
+        <script src="./jcudlc.js"></script>
+    </body>
+</html>
+```
+
+Save this content as `index.html`. 
+
+In the same directory, save `jcudlc.js` and `jcudlc-style.css`, and a sample data file such as this:
+
+> TODO finish this once the repo paths are stable
+
+
 ## Files
 
 Displaying a JCUDLC on a web page requires four files on your web server, in addition to the web page itself.
@@ -51,7 +84,8 @@ Add a link to the javascript just before your page's closing `body` tag.
     <script src="./jcudlc.js"></script>
 </body>
 ```
-That's all the page setup. You also need to make sure your files are in place, and then you're all set!
+That's all the page setup. You also need to make sure your files are in place, and then you're all set.
+
 
 
 ## Configuration
@@ -94,25 +128,25 @@ These tables offer a brief summary of configuration keys. Further discussion of 
 
 Most of JCU DLC's colours and styling can be set in the config file, or in a CSS variable. The default colours set up a dark filter sidebar and a light result column using shades of grey; use these style settings when you want to match your brand colourings.
 
-| Config Key                  <br>CSS Variable                | Default   | Description |
-| ----------------------------------------------------------- | --------- | ----------- |
-| `font`                      <br>`--jcudlc-font-family`      | `inherit` | Font family specification |
-| `filterText`                <br>`--jcudlc-filter-text`      | `#ddd`    | Text colour for filters |
-| `filterColumnBackground`    <br>`--jcudlc-filter-bg`        | `#111`    | Background for the filters column |
-| `filterItemBackground`      <br>`--jcudlc-filter-item`      | `#222`    | Background for a single filter field |
-| `filterActiveBackground`    <br>`--jcudlc-filter-active`    | `#333`    | Background for a hovered-over filter field |
-| `filterHighlightBackground` <br>`--jcudlc-filter-highlight` | `#000`    | Background for a selected filter value |    
-| `dataText`                  <br>`--jcudlc-data-text`        | `#111`    | Text colour for the results column |
-| `dataColumnBackground`      <br>`--jcudlc-data-bg`          | `#bbb`    | Background for the results column |
-| `dataItemBackground`        <br>`--jcudlc-data-item`        | `#fff`    | Background for a single result item |
-| `dataActiveBackground`      <br>`--jcudlc-data-active`      | `#eee`    | Background for the icon |
-| `dataHighlightBackground`   <br>`--jcudlc-data-highlight`   | `#ffffec` | Background for a hovered-over item |
+| Config Key                  <br>CSS Variable                | Default    | Description |
+| ----------------------------------------------------------- | ---------  | ----------- |
+| `font`                      <br>`--jcudlc-font-family`      | `inherit`  | Font family specification |
+| `filterText`                <br>`--jcudlc-filter-text`      | `#ddd`     | Text colour for filters |
+| `filterColumnBackground`    <br>`--jcudlc-filter-bg`        | `#111`     | Background for the filters column |
+| `filterItemBackground`      <br>`--jcudlc-filter-item`      | `#222`     | Background for a single filter field |
+| `filterActiveBackground`    <br>`--jcudlc-filter-active`    | `#333`     | Background for a hovered-over filter field |
+| `filterHighlightBackground` <br>`--jcudlc-filter-highlight` | `#000`     | Background for a selected filter value |    
+| `dataText`                  <br>`--jcudlc-data-text`        | `#111`     | Text colour for the results column |
+| `dataColumnBackground`      <br>`--jcudlc-data-bg`          | `#bbb`     | Background for the results column |
+| `dataItemBackground`        <br>`--jcudlc-data-item`        | `#fff`     | Background for a single result item |
+| `dataActiveBackground`      <br>`--jcudlc-data-active`      | `#eee`     | Background for the icon |
+| `dataHighlightBackground`   <br>`--jcudlc-data-highlight`   | `#ffffec`  | Background for a hovered-over item |
 | `interfaceText`             <br>`--jcudlc-interface-text`   | `dataText` | Text colour for general interface messages |
 | `interfaceBackground`       <br>`--jcudlc-interface-bg`     | `dataActiveBackground` | Background for general interface messages |
-| `alertInfoText`             <br>`--jcudlc-message-good-text`| `#037`    | Text colour for advice text |
-| `alertInfoBackground`       <br>`--jcudlc-message-good-bg`  | `#ecf6ff` | Background for advice text |
-| `alertErrorText`            <br>`--jcudlc-message-bad-text` | `#700`    | Text colour for alarm/error text |
-| `alertErrorBackground`      <br>`--jcudlc-message-bad-bg`   | `#fee`    | Background for alarm/error text |
+| `alertInfoText`             <br>`--jcudlc-message-good-text`| `#037`     | Text colour for advice text |
+| `alertInfoBackground`       <br>`--jcudlc-message-good-bg`  | `#ecf6ff`  | Background for advice text |
+| `alertErrorText`            <br>`--jcudlc-message-bad-text` | `#700`     | Text colour for alarm/error text |
+| `alertErrorBackground`      <br>`--jcudlc-message-bad-bg`   | `#fee`     | Background for alarm/error text |
 
 
 ### Locate the data file

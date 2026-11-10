@@ -16,6 +16,33 @@
 <h2>Overview</h2>
 <p>This document describes the web front end of the JCU Digital Library Catalogue, a zero-dependency tool to display and filter a list of items.</p>
 <p>For general info about the tool, visit the <a href="index.html">JCU DLC main page</a>. For information about preparing your data list, refer to the <a href="dataprep.html">JCU DLC Data Prep</a> docs.</p>
+<h2>Quick start</h2>
+<p>A complete HTML page that works is:</p>
+<pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+    &lt;head&gt;
+        &lt;title&gt;JCU DLC Example&lt;/title&gt;
+        &lt;!-- grab the Google Material Symbols font for icons --&gt;
+        &lt;link href=&quot;https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&quot; rel=&quot;stylesheet&quot; /&gt;
+        &lt;link rel=&quot;stylesheet&quot; href=&quot;./jcudlc-style.css&quot; /&gt;
+        &lt;style&gt;
+            body { font-family: sans-serif; }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;JCU Digital Library Catalogue example&lt;/h1&gt;
+        &lt;div id=&quot;jcudlc&quot;&gt;
+            &lt;!-- catalog goes here --&gt;
+        &lt;/div&gt;
+        &lt;script src=&quot;./jcudlc.js&quot;&gt;&lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<p>Save this content as <code>index.html</code>. </p>
+<p>In the same directory, save <code>jcudlc.js</code> and <code>jcudlc-style.css</code>, and a sample data file such as this:</p>
+<blockquote>
+<p>TODO finish this once the repo paths are stable</p>
+</blockquote>
 <h2>Files</h2>
 <p>Displaying a JCUDLC on a web page requires four files on your web server, in addition to the web page itself.</p>
 <p><strong><code>jcudlc.js</code></strong> is the main JavaScript file that does the job of creating and managing the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
@@ -43,7 +70,7 @@
     &lt;script src=&quot;./jcudlc.js&quot;&gt;&lt;/script&gt;
 &lt;/body&gt;
 </code></pre>
-<p>That&#39;s all the page setup. You also need to make sure your files are in place, and then you&#39;re all set!</p>
+<p>That&#39;s all the page setup. You also need to make sure your files are in place, and then you&#39;re all set.</p>
 <h2>Configuration</h2>
 <p>You use the configuration file to set up how you want the Catalogue to behave.</p>
 <h3>Summary tables</h3>

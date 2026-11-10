@@ -99,10 +99,6 @@ to run a **https** server at https://localhost. The first time you run this you 
 ## Todo
 
 
-#### Changes to data file
-
-- [ ] URL to follow when icon clicked: requires a mod of Pauline's python
-
 #### Higher Priority
 
 - [ ] when there's no filters, update top text to say "showing 200 out of 12345 total items" or something like that
@@ -128,6 +124,7 @@ to run a **https** server at https://localhost. The first time you run this you 
 
 #### Complete
 
+- [x] URL to follow when icon clicked: requires a mod of Pauline's python
 - [x] fonts
     - [x] inherit from page
     - [x] support font specification in config
