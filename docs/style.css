@@ -135,7 +135,7 @@ html {
   body > table {
     font-size: 0.85rem;
     max-width: var(--body-width);
-    margin: 1.5em 0 2.5rem;
+    margin: 1.5em auto 2.5rem;
     border-collapse: collapse;
     border: 1px solid var(--strong-color);
     border-width: 1px 0 0 0;

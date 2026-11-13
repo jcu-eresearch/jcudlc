@@ -82,13 +82,18 @@
 <blockquote>
 <p>TODO try this</p>
 </blockquote>
-<h2>Files</h2>
-<p>Displaying a JCUDLC on a web page requires four files on your web server, in addition to the web page itself.</p>
-<p><strong><code>jcudlc.js</code></strong> is the main JavaScript file that does the job of creating and managing the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
-<p><strong><code>jcudlc-style.css</code></strong> is the CSS file that provides format to the elements within the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
-<p><strong><code>jcudlc-data.json</code></strong> is your data, the list of all the items that the Catalogue will be searching and displaying. You prepare this file using the data-prep process documented elsewhere. The name of this data file can be anything you like, just set it in your config file.</p>
-<p><strong><code>jcudlc-config.json</code></strong> is your configuration. JCUDLC uses sensible defaults so that you will get some kind of reasonable result without having to change much in here, but you will probably want to tweak a few things, and how to do that is documented down below.</p>
 <h2>Setup</h2>
+<h3>Files</h3>
+<p>Displaying a JCU Digital Library Catalogue on a web page requires four files on your web server, in addition to the web page itself.</p>
+<h4>The source code, <code>jcudlc.js</code></h4>
+<p><strong><code>jcudlc.js</code></strong> is the main JavaScript file that does the job of creating and managing the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
+<h4>The CSS, <code>jcudlc-style.css</code></h4>
+<p><strong><code>jcudlc-style.css</code></strong> is the CSS file that provides formatting to the elements within the Catalogue. You never need to edit this file, it just needs to be loaded onto the page.</p>
+<h4>Your data, <code>jcudlc-data.json</code></h4>
+<p><strong><code>jcudlc-data.json</code></strong> is your data, the list of all the items that the Catalogue will be searching and displaying. You prepare this file using the data-prep process documented elsewhere. The name of this data file can be anything you like, just set it in your config file.</p>
+<h4>Your configuration, <code>jcudlc-config.json</code></h4>
+<p><strong><code>jcudlc-config.json</code></strong> is your configuration. JCUDLC uses sensible defaults so that you will get some kind of reasonable result without having to change much in here, but you will probably want to tweak a few things, and how to do that is documented down below.</p>
+<h3>HTML page setup</h3>
 <p>Add a link to the CSS file inside your page&#39;s <code>&lt;head&gt;</code> tag. If you use icons, also add a link to the icon font.</p>
 <pre><code class="language-html">&lt;head&gt;
     ...
@@ -111,10 +116,10 @@
 </code></pre>
 <p>That&#39;s all the page setup. You also need to make sure your files are in place, and then you&#39;re all set.</p>
 <h2>Configuration</h2>
-<p>You use the configuration file to set up how you want the Catalogue to behave.</p>
+<p>You use the configuration file to set up how you want the Catalogue to behave. JCUDLC comes with sensible defaults for all the configuration settings available, but to get the most out of it you will probbaly need to make some changes.</p>
 <h3>Summary tables</h3>
 <p>These tables offer a brief summary of configuration keys. Further discussion of some of these settings is included below the tables.</p>
-<h4>Configuration summary table</h4>
+<h4>Configuration summary</h4>
 <table>
 <thead>
 <tr>
@@ -151,7 +156,7 @@
 <tr>
 <td><code>titleFormat</code></td>
 <td><code>&#39;bold unlabelled&#39;</code></td>
-<td>Format used for the <code>titleFields</code></td>
+<td><a href="#formatting-keywords">Formatting keywords</a> applied to the <code>titleFields</code></td>
 </tr>
 <tr>
 <td><code>subtitleFields</code></td>
@@ -161,7 +166,7 @@
 <tr>
 <td><code>subtitleFormat</code></td>
 <td><code>&#39;italic&#39;</code></td>
-<td>Format used for the <code>subtitleFields</code></td>
+<td><a href="#formatting-keywords">Formatting keywords</a> applied to the <code>subtitleFields</code></td>
 </tr>
 <tr>
 <td><code>quietFields</code></td>
@@ -176,7 +181,7 @@
 <tr>
 <td><code>quietLabelFormat</code></td>
 <td><code>&#39;faded italic center&#39;</code></td>
-<td>Format used for the <code>quietLabel</code></td>
+<td><a href="#formatting-keywords">Formatting keywords</a> applied to the <code>quietLabel</code></td>
 </tr>
 <tr>
 <td><code>maxResultCount</code></td>
@@ -201,7 +206,7 @@
 <tr>
 <td><code>separatorFormat</code></td>
 <td><code>&#39;faded&#39;</code></td>
-<td>Format used for the <code>separator</code></td>
+<td><a href="#formatting-keywords">Formatting keywords</a> applied to the <code>separator</code></td>
 </tr>
 <tr>
 <td><code>iconField</code></td>
@@ -234,7 +239,7 @@
 <td>Field names to use instead of what&#39;s in your data file</td>
 </tr>
 </tbody></table>
-<h4>Styles summary table</h4>
+<h4>Style customisation summary</h4>
 <p>Most of JCU DLC&#39;s colours and styling can be set in the config file, or in a CSS variable. The default colours set up a dark filter sidebar and a light result column using shades of grey; use these style settings when you want to match your brand colourings.</p>
 <table>
 <thead>
@@ -330,32 +335,49 @@
 <td>Background for alarm/error text</td>
 </tr>
 </tbody></table>
-<h3>Locate the data file</h3>
-<p>JCUDLC will load the item list from a JSON file you have prepared with JCU DLC&#39;s back end tools or in some other way. The config key <code>dataUrl</code> specifies that file. Starting with dot-slash <code>./</code> will make the path relative to the web page the Catalogue is running in. By default JCUDLC looks for a file called <code>jcudlc-data.json</code> at the same path as your HTML file.</p>
-<h3>Display item properties</h3>
-<p>Within a single item result, there are three sections in which item properties can appear: a header, a main body, and a &quot;quiet&quot; section. Initially results are displayed with just the header section showing. Clicking or tapping the header opens or closes the main body. If there are fields allocated to the &quot;quiet&quot; section, then a link at the bottom of the main body will open or close the quiet section when clicked or tapped.</p>
+<h3>Configuration details</h3>
+<h4>Locate the data file</h4>
+<p>JCUDLC loads your item list from a JSON file you have prepared with JCU DLC&#39;s back end tools or in some other way. By default JCUDLC looks for a file called <code>jcudlc-data.json</code> at the same path as your HTML file; use the config key <code>dataUrl</code> to specify some other path to that file.</p>
+<p>Starting with dot-slash or no punctuation (e.g. <code>./data.json</code> or <code>data.json</code>) will make the path relative to the web page the Catalogue is running in. Starting with a slash will make it a fixed path on your web server (e.g. <code>/data/startrek.json</code>). For security reasons, you should not provide a path to a folder that might contain user uploads.</p>
+<h4>Display item fields</h4>
+<p>Within a single item result, there are three sections in which item fields can appear: a header, a main body, and a &quot;quiet&quot; section. Initially results are displayed with just the header section showing. Clicking or tapping the header opens or closes the main body. If there are fields allocated to the &quot;quiet&quot; section, then a link at the bottom of the main body will open or close the quiet section when clicked or tapped.</p>
+<h5>Title and Subtitle</h5>
 <p>In the image below, you can see three items. These are all closed, so just their header sections are showing.
 <img src="st-tng-closed.png" alt="three items showing just their headers"></p>
 <p>The item header has two parts that JCUDLC refer to as the <em><strong>Title</strong></em> and the <em><strong>Subtitle</strong></em>. You can place fields into these sections using configuration lists <code>titleFields</code> and <code>subtitleFields</code>. For the example shown, this is set to:</p>
 <pre><code class="language-json">&quot;titleFields&quot;: [&quot;title&quot;],
 &quot;subtitleFields&quot;: [&quot;years&quot;],
 </code></pre>
-<p>That configuration will put the item&#39;s <code>title</code> field into the Title part, and the item&#39;s <code>years</code> field into the Subtitle part. If not specified in config, JCUDLC will default to <code>header</code>, <code>title</code>, and <code>name</code> as the title fields, so technically the example didn&#39;t need to specify <code>titleFields</code> at all.</p>
-<p>Defaults for subtitle are <code>author</code>, <code>authors</code>, and <code>editors</code>.</p>
+<p>That configuration will put the item&#39;s <code>title</code> field into the Title part, and the item&#39;s <code>years</code> field into the Subtitle part. It&#39;s okay to list multiple fields in each list, and all the listed fields will be shown.</p>
+<p>If not specified in config, JCUDLC will default to <code>[&quot;header&quot;, &quot;title&quot;, &quot;name&quot;]</code> as the Title fields, so technically the example didn&#39;t need to specify <code>titleFields</code> at all.</p>
+<p>Default fields for the Subtitle are <code>[&quot;author&quot;, &quot;authors&quot;, &quot;editors&quot;]</code>.</p>
 <p>The formatting of each part is also customisable using JCUDLC&#39;s <a href="#formatting-keywords">formatting keywords</a>. In the example here, we&#39;re using:</p>
 <pre><code class="language-json">&quot;titleFormat&quot;: &quot;bigger bold unlabelled&quot;,
 &quot;subtitleFormat&quot;: &quot;italic&quot;,
 </code></pre>
-<p>The defaults for these are <code>bold unlabelled</code> for <code>titleFormat</code> and <code>italic</code> for <code>subtitleFormat</code>.</p>
-<p>Once the user taps on the &quot;The Next Generation&quot; header, that item expands to display its fields. The image below shows The Next Generation item expanded. In this view, the fields in the header appear only in the header, and the item&#39;s main body contains all the remaining fields.
-<img src="st-tng-open.png" alt="three items, the central item expanded showing more detail"></p>
-<p>Sometimes you might have more obscure, less generally useful fields in your items. You can hide these under a link, so that the expanded item doesn&#39;t show these extra fields by default, but the user can see them if they need to by clicking a link. JCUDLC calls these <em><strong>quiet</strong></em> fields. The image below shows our example item after the user taps on &quot;Additional details&quot;.
-<img src="st-tng-detailed.png" alt="three items, the central item expanded showing more detail"></p>
-<h3>Hide blank values</h3>
-<p>By default it will show all item proerties, but JCUDLC can hide item properties that seem blank. To get this behaviour, supply the <code>hideValues</code> config key, and provide a list of blank-ish values. For example, your data might use any of blank strings, <code>N/A</code>, and <code>NONE</code> for unspecified values, so set <code>hideValues</code> to <code>[&quot;&quot;, &quot;N/A&quot;, &quot;NONE&quot;]</code> to omit any item proerties set to one of those values.</p>
+<p>The default formats for Title fields are <code>bold unlabelled</code>, and <code>italic</code> for the format of Subtitle fields.</p>
+<h5>Main detail section</h5>
+<p>Once the user taps on the &quot;The Next Generation&quot; header, that item expands to display its fields. The image below shows The Next Generation item expanded. In this view, the fields in the header appear only in the header, and the item&#39;s main body contains almost all the remaining fields.</p>
+<p>There&#39;s no need to specify which fields should appear in the Main detail section. Any field you haven&#39;t sent to some other section, or hidden entirely, will show up here.</p>
+<p><img src="st-tng-open.png" alt="three items, the central item expanded showing more detail"></p>
+<h5>Quiet section</h5>
+<p>Sometimes you might have more obscure, less generally useful fields in your items. You can hide these under a link, so that the expanded item doesn&#39;t show these extra fields by default, but the user can see them if they need to by clicking. JCUDLC calls these <em><strong>quiet</strong></em> fields. The image below shows our example item after the user taps on &quot;Additional details&quot;.</p>
+<p><img src="st-tng-detailed.png" alt="three items, the central item expanded showing more detail"></p>
+<p>You pick fields to hide away in the Quiet section with the <code>quietFields</code> config key.</p>
+<pre><code class="language-json">  &quot;quietFields&quot;: [&quot;start_date&quot;, &quot;end_date&quot;, &quot;icon&quot;],
+</code></pre>
+<p>In our example, we&#39;ve made these fields quiet because start date and end date aren&#39;t as interesting, and the <code>icon</code> field isn&#39;t really data at all but metadata selecting the icon that this item should use. More on icons later.</p>
+<p>The text &quot;additional details &gt;&quot; in our example is configurable using <code>quietLabel</code>, and the format using <a href="#formatting-keywords">formatting keywords</a> in <code>quietLabelFormat</code>. The default label is <code>more &gt;</code> formatted with <code>faded italic center</code>.</p>
+<pre><code class="language-json">  &quot;quietLabel&quot;: &quot;Additional details &gt;&quot;,
+  &quot;quietLabelFormat&quot;: &quot;faded italic center smaller&quot;,
+</code></pre>
+<h4>Hide blank values</h4>
+<p>By default JCUDLC will show all of the fields in each item, but JCUDLC can hide item properties that are blank. To get this behaviour, include the <code>hideValues</code> key in your configuration, and provide a list of blank-ish values.</p>
+<p>For example, your data might use any of blank strings, <code>N/A</code>, and <code>NONE</code> for unspecified values. If you set <code>hideValues</code> to <code>[&quot;&quot;, &quot;N/A&quot;, &quot;NONE&quot;]</code>, then any item field that is set to one of those values will not appear in any section of the displayed item.</p>
+<p>JCUDLC items can have multi-valued fields; <code>hideValues</code> will only hide a field if all of its values are listed.</p>
 <h2>Formatting keywords</h2>
 <p>JCUDLC uses keywords for convenient configuration of formatted text. You will supply a list of keywords as a single space-separated string, so if you want your titles to be bold and italic and be a bit smaller than normal text, you can set <code>titleFormat</code> to <code>&quot;bold italic smaller&quot;</code>.</p>
-<p>Not all keywords are valid in all config keys; if a format doesn&#39;t make sense then it won&#39;t work &ndash; for example, <code>unlabelled</code> only applies to the format of item properties.</p>
+<p>Not all keywords are valid in all config keys; if a format doesn&#39;t make sense then it won&#39;t work &ndash; for example, <code>unlabelled</code> only applies to the format of item properties. It&#39;s not an error to include formats that don&#39;t apply, they simply won&#39;t work.</p>
 <table>
 <thead>
 <tr>
@@ -396,10 +418,6 @@
 <td>don&#39;t show the property label</td>
 </tr>
 </tbody></table>
-<h2>Limitations</h2>
-<blockquote>
-<p>TODO not sure what to put here?</p>
-</blockquote>
 
 
     <script>hljs.highlightAll();</script>
