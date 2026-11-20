@@ -126,7 +126,7 @@ Add a link to the CSS file inside your page's `<head>` tag. If you use icons, al
 </head>
 ```
 
-Add an empty `div` tag somewhere in body of your page with an id of `jcudlc`, wherever you want your Catalogue to show up. When the javascript runs, it will build the Catalogue inside this div.
+Add an empty `div` tag somewhere in the body of your page with an id of `jcudlc`, wherever you want your Catalogue to show up. When the javascript runs, it will build the Catalogue inside this div. Since this is an `id` property, you can only have one Catalogue per webpage.
 
 ```html
 <body>
@@ -281,8 +281,46 @@ By default JCUDLC will show all of the fields in each item, but JCUDLC can hide 
 
 For example, your data might use any of blank strings, `N/A`, and `NONE` for unspecified values. If you set `hideValues` to `["", "N/A", "NONE"]`, then any item field that is set to one of those values will not appear in any section of the displayed item.
 
-JCUDLC items can have multi-valued fields; `hideValues` will only hide a field if all of its values are listed.
+JCUDLC items can have [multi-valued fields](#displaying-multi-valued-fields); `hideValues` will only hide a field if all of its values are listed.
 
+#### Displaying multi-valued fields
+
+JCUDLC supports item fields with multiple values. All the values will be displayed with a separator between them; the default separator is a Unicode character called Big Solidus, which is a tall forward slash that looks like this: ⧸ which is displayed in a faded-out colour. We recommend using `faded` to make it clear that the separator isn't part of your item field's value.
+
+Not every font includes every Unicode character, so if your page font doesn't display the Big Solidus, then you might prefer the character called Black Circle `" ● "` or using a common set of characters such as a standard slash `" / "` or a pair of colons `" :: "`. Include spaces before and after if that gives you the look you want.
+
+The separator and its formatting can be set in config using these keys:
+
+```json
+  "separator": " ● ",
+  "separatorFormat": "faded",
+```
+
+#### Icons
+
+You can specify an icon for each item. Icons are specified using the name of a symbol in Google's [Material Design Icon Font](https://fonts.google.com/icons). By default JCUDLC looks for an item field called `icon` but you can change the field name in config.
+
+To find the icon name, visit the [icon font page](https://fonts.google.com/icons and search for the icon you want. Click the icon you like, which will open a sidebar to the right. Scroll to the bottom of that sidebar looking for an "Icon name" section. Copy the name you see there, e.g. "cloud_download". Use that string in your item's `icon` field.
+
+Icons can be links to URLs, if you supply an item field called `url`, or override the fieldname in config and supply a URL in that alternative field. An icon that's a link will get a slightly different rendering than an icon that is not linked.
+
+Hovering over the icon can display pop-up text that by default will come from an item's `iconDescription` field, if the item has one.
+
+```json
+"icon": "google_icon_name", 
+"iconTooltip": "access_rights",
+"iconUrl": "access_link"
+```
+
+An item with no icon specified will not have an icon. If you prefer to have a default or "blank" icon, you'll need to manipulate your data to provide that default icon in each item.
+
+The setup instructions for JCUDLC include adding the Google icon font to the page; if you don't use icons on your items, you can leave the icon font part out of your page setup. 
+
+#### Search for a string of characters
+
+JCUDLC lets users search for a word or phrase in an item. By default 
+
+> TODO: complete this section
 
 ## Formatting keywords
 
