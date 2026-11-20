@@ -300,7 +300,7 @@ The separator and its formatting can be set in config using these keys:
 
 You can specify an icon for each item. Icons are specified using the name of a symbol in Google's [Material Design Icon Font](https://fonts.google.com/icons). By default JCUDLC looks for an item field called `icon` but you can change the field name in config.
 
-To find the icon name, visit the [icon font page](https://fonts.google.com/icons and search for the icon you want. Click the icon you like, which will open a sidebar to the right. Scroll to the bottom of that sidebar looking for an "Icon name" section. Copy the name you see there, e.g. "cloud_download". Use that string in your item's `icon` field.
+To find the icon name, visit the [icon font page](https://fonts.google.com/icons) and search for the icon you want. Click the icon you like, which will open a sidebar to the right. Scroll to the bottom of that sidebar looking for an "Icon name" section. Copy the name you see there, e.g. "cloud_download". Use that string in your item's `icon` field.
 
 Icons can be links to URLs, if you supply an item field called `url`, or override the fieldname in config and supply a URL in that alternative field. An icon that's a link will get a slightly different rendering than an icon that is not linked.
 
